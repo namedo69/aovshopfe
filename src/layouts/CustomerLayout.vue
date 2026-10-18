@@ -15,7 +15,6 @@
           </div>
           <div>
             <span class="text-xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">langxang.shop</span>
-            <span class="hidden sm:inline-block ml-1 text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-600 font-semibold border border-sky-200">Sky</span>
           </div>
         </router-link>
 
