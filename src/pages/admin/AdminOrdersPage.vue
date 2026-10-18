@@ -539,29 +539,19 @@ const handleConfirmBulkAction = async () => {
   const reason = bulkActionReason.value.trim()
   const status = bulkTargetStatus.value
 
-  let successCount = 0
-  let failCount = 0
-
-  for (const id of ids) {
-    try {
-      await adminService.updateOrderStatus(id, status, reason)
-      successCount++
-    } catch {
-      failCount++
-    }
+  try {
+    // Gửi 1 REQUEST DUY NHẤT lên Backend để cập nhật hàng loạt 50, 100 đơn trong 1 câu lệnh SQL
+    const res = await adminService.updateBatchOrderStatus(ids, status, reason)
+    showAlert(`Đã cập nhật siêu tốc thành công ${res.updatedCount || ids.length} đơn hàng!`)
+    isBulkModalOpen.value = false
+    clearSelection()
+    await loadOrders()
+  } catch (err: any) {
+    const msg = err.response?.data?.error?.message || err.message || 'Lỗi cập nhật hàng loạt'
+    showAlert(msg, 'error')
+  } finally {
+    isSubmitting.value = false
   }
-
-  isSubmitting.value = false
-  isBulkModalOpen.value = false
-  clearSelection()
-
-  if (failCount === 0) {
-    showAlert(`Đã cập nhật thành công tất cả ${successCount} đơn hàng!`)
-  } else {
-    showAlert(`Đã cập nhật ${successCount} đơn thành công, ${failCount} đơn lỗi/không hợp lệ!`, 'error')
-  }
-
-  await loadOrders()
 }
 
 const handleRetry = async (order: Order) => {

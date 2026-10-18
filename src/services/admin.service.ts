@@ -146,6 +146,12 @@ export const adminService = {
     await apiClient.patch(`/admin/orders/${id}/status`, { status, reason })
   },
 
+  // Cập nhật trạng thái hàng loạt bằng 1 request duy nhất
+  async updateBatchOrderStatus(ids: string[], status: string, reason: string): Promise<{ success: boolean; updatedCount: number }> {
+    const res = await apiClient.post('/admin/orders/batch-status', { ids, status, reason })
+    return res.data
+  },
+
   async retryOrder(id: string): Promise<void> {
     await apiClient.post(`/admin/orders/${id}/retry`)
   },
