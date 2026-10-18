@@ -21,19 +21,35 @@
                 {{ orderDraft.product.category }}
               </span>
             </div>
-            <div class="text-right font-bold text-sky-600">
-              {{ formatVND(orderDraft.product.price) }}
+            <div class="text-right">
+              <span class="text-xs text-slate-400 block">{{ formatVND(orderDraft.product.price) }} / 1 code</span>
+              <span class="font-bold text-sky-600">x {{ codeList.length }} code</span>
             </div>
           </div>
 
-          <!-- Dữ liệu đã nhập -->
+          <!-- Danh sách các Code Sự kiện -->
           <div class="mt-4 space-y-2">
-            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Thông tin yêu cầu</h4>
-            <div v-for="(val, key) in orderDraft.inputs" :key="key" class="flex justify-between text-sm py-1">
-              <span class="text-slate-500">{{ key === 'accountId' ? 'Code Sự kiện' : key }}:</span>
-              <span class="font-medium text-slate-800 font-mono">{{ val }}</span>
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Danh Sách Code Sự Kiện ({{ codeList.length }} đơn lẻ)
+              </h4>
+              <span class="text-[11px] text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded">
+                Tự động tách {{ codeList.length }} đơn
+              </span>
             </div>
-            <div v-if="orderDraft.customerNote" class="flex justify-between text-sm py-1">
+
+            <div class="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+              <div
+                v-for="(codeItem, idx) in codeList"
+                :key="idx"
+                class="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs"
+              >
+                <span class="text-slate-400 font-medium">Đơn #{{ idx + 1 }}:</span>
+                <span class="font-mono font-bold text-sky-800">{{ codeItem }}</span>
+              </div>
+            </div>
+
+            <div v-if="orderDraft.customerNote" class="flex justify-between text-xs py-1 border-t border-slate-100 pt-2">
               <span class="text-slate-500">Ghi chú:</span>
               <span class="italic text-slate-700">{{ orderDraft.customerNote }}</span>
             </div>
@@ -53,7 +69,7 @@
             <button
               @click="applyVoucher"
               :disabled="isValidatingVoucher || !voucherCode"
-              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium text-sm transition disabled:opacity-50"
+              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium text-sm transition disabled:opacity-50 cursor-pointer"
             >
               Áp dụng
             </button>
@@ -71,15 +87,15 @@
 
           <div class="space-y-2 text-sm">
             <div class="flex justify-between text-slate-600">
-              <span>Giá gốc</span>
-              <span>{{ formatVND(orderDraft.product.price) }}</span>
+              <span>Đơn giá (x{{ codeList.length }})</span>
+              <span>{{ formatVND(rawTotalPrice) }}</span>
             </div>
             <div v-if="discountAmount > 0" class="flex justify-between text-emerald-600">
               <span>Giảm giá</span>
               <span>-{{ formatVND(discountAmount) }}</span>
             </div>
             <div class="pt-3 border-t border-slate-100 flex justify-between font-bold text-base text-slate-900">
-              <span>Cần thanh toán</span>
+              <span>Tổng thanh toán</span>
               <span class="text-sky-600">{{ formatVND(finalPrice) }}</span>
             </div>
           </div>
@@ -100,10 +116,10 @@
             v-if="authStore.userBalance >= finalPrice"
             @click="submitOrder"
             :disabled="isSubmitting"
-            class="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-sm shadow-md shadow-sky-500/20 transition hover:shadow-lg disabled:opacity-50"
+            class="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-sm shadow-md shadow-sky-500/20 transition hover:shadow-lg disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
           >
-            <span v-if="isSubmitting">Đang xử lý đơn...</span>
-            <span v-else>Xác Nhận Thanh Toán</span>
+            <Loader2 v-if="isSubmitting" class="w-4 h-4 animate-spin" />
+            <span>{{ isSubmitting ? `Đang tạo ${codeList.length} đơn...` : `Thanh Toán (${codeList.length} Đơn)` }}</span>
           </button>
 
           <router-link
@@ -134,7 +150,7 @@ import { useAuthStore } from '@/stores/auth'
 import { formatVND, generateIdempotencyKey } from '@/utils/format'
 import { orderService } from '@/services/order.service'
 import { walletService } from '@/services/wallet.service'
-import { ArrowLeft, AlertCircle } from 'lucide-vue-next'
+import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-vue-next'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -166,10 +182,26 @@ onMounted(async () => {
   }
 })
 
+// Danh sách code (hỗ trợ cả dạng mảng codes mới và dạng cũ 1 code)
+const codeList = computed<string[]>(() => {
+  if (!orderDraft.value) return []
+  if (Array.isArray(orderDraft.value.codes) && orderDraft.value.codes.length > 0) {
+    return orderDraft.value.codes
+  }
+  if (orderDraft.value.inputs?.accountId) {
+    return [orderDraft.value.inputs.accountId]
+  }
+  return ['']
+})
+
+const rawTotalPrice = computed(() => {
+  if (!orderDraft.value?.product) return 0
+  return orderDraft.value.product.price * codeList.value.length
+})
+
 const finalPrice = computed(() => {
-  if (!orderDraft.value) return 0
-  const price = orderDraft.value.product.price - discountAmount.value
-  return price > 0 ? price : 0
+  const total = rawTotalPrice.value - discountAmount.value
+  return total > 0 ? total : 0
 })
 
 const applyVoucher = async () => {
@@ -205,18 +237,30 @@ const submitOrder = async () => {
   if (isSubmitting.value) return
   isSubmitting.value = true
 
-  const _idempotencyKey = generateIdempotencyKey()
-  console.log('Using Idempotency-Key:', _idempotencyKey)
+  const codesToOrder = codeList.value
 
   try {
-    const newOrder = await orderService.createOrder({
-      productId: orderDraft.value.product.id,
-      inputs: orderDraft.value.inputs,
-      voucherCode: voucherCode.value || undefined,
-      customerNote: orderDraft.value.customerNote,
-    }, _idempotencyKey)
+    // Duyệt qua từng code và tạo từng đơn hàng riêng biệt
+    // Mỗi đơn gửi 1 Idempotency-Key ngẫu nhiên riêng
+    for (let i = 0; i < codesToOrder.length; i++) {
+      const codeStr = codesToOrder[i]
+      const idempotencyKey = generateIdempotencyKey() + `_${i}`
 
-    // Lấy lại số dư ví thực từ backend sau khi trừ
+      // Chỉ áp voucher cho đơn hàng đầu tiên nếu có mã
+      const vCode = i === 0 ? (voucherCode.value || undefined) : undefined
+
+      await orderService.createOrder({
+        productId: orderDraft.value.product.id,
+        inputs: {
+          accountId: codeStr,
+          code: codeStr,
+        },
+        voucherCode: vCode,
+        customerNote: orderDraft.value.customerNote,
+      }, idempotencyKey)
+    }
+
+    // Lấy lại số dư ví thực từ backend sau khi thanh toán thành công
     try {
       const w = await walletService.getWallet()
       authStore.updateBalance(w.balance)
@@ -225,7 +269,9 @@ const submitOrder = async () => {
     }
 
     sessionStorage.removeItem('checkout_draft')
-    router.push(`/orders/${newOrder.orderCode}`)
+
+    // Chuyển hướng sang trang danh sách đơn hàng để khách thấy tất cả các đơn vừa tạo
+    router.push('/orders')
   } catch (apiErr: any) {
     const errObj = apiErr.response?.data?.error
     const msg = errObj?.message || apiErr.message || 'Có lỗi xảy ra khi tạo đơn hàng'

@@ -19,6 +19,7 @@
               {{ formatVND(product.originalPrice) }}
             </span>
             <span class="text-2xl font-black text-sky-600">{{ formatVND(product.price) }}</span>
+            <span class="text-xs text-slate-400 block mt-0.5">/ 1 Code Sự kiện</span>
           </div>
           <p class="text-xs text-slate-500 mt-4 leading-relaxed">
             {{ product.description }}
@@ -27,91 +28,90 @@
 
         <div class="bg-sky-50 border border-sky-200 rounded-2xl p-4 text-xs text-sky-800 space-y-2">
           <div class="flex items-center gap-2 font-semibold">
-            <ShieldCheck class="w-4 h-4 text-sky-600" /> Cam kết dịch vụ
+            <ShieldCheck class="w-4 h-4 text-sky-600" /> Thanh toán 1 lần - Tách đơn tự động
           </div>
-          <p>Hệ thống tự động kích hoạt ngay khi bạn xác nhận thanh toán thành công bằng số dư ví.</p>
+          <p>Bạn có thể nhập nhiều Code Sự kiện cùng lúc. Mỗi code sẽ được hệ thống tạo thành 1 đơn hàng riêng biệt để dễ theo dõi tiến độ hoàn thành.</p>
         </div>
       </div>
 
       <!-- Dynamic Form Right -->
       <div class="md:col-span-2">
         <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-          <h2 class="text-lg font-bold text-slate-800 mb-4">Thông Tin Nhận Gói</h2>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-slate-800">Nhập Danh Sách Code Sự Kiện</h2>
+            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-700">
+              Tổng cộng: {{ eventCodes.length }} code
+            </span>
+          </div>
 
           <form @submit.prevent="proceedToCheckout" class="space-y-4">
-            <!-- Render schema fields dynamically -->
-            <div v-for="field in product.inputSchema" :key="field.name">
-              <label class="block text-sm font-medium text-slate-700 mb-1">
-                {{ field.label }} <span v-if="field.required" class="text-rose-500">*</span>
+            <!-- Danh sách từng ô input cho mỗi code -->
+            <div class="space-y-3">
+              <label class="block text-xs font-semibold text-slate-700">
+                Code Sự Kiện (1 code / 1 ô) <span class="text-rose-500">*</span>
               </label>
 
-              <!-- Text Input -->
-              <input
-                v-if="field.type === 'text'"
-                v-model="formData[field.name]"
-                type="text"
-                :required="field.required"
-                :placeholder="field.placeholder || ''"
-                class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 text-sm outline-none"
-              />
-
-              <!-- Number Input -->
-              <input
-                v-else-if="field.type === 'number'"
-                v-model.number="formData[field.name]"
-                type="number"
-                :required="field.required"
-                :min="field.min"
-                :max="field.max"
-                :placeholder="field.placeholder || ''"
-                class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 text-sm outline-none"
-              />
-
-              <!-- Select Input -->
-              <select
-                v-else-if="field.type === 'select'"
-                v-model="formData[field.name]"
-                :required="field.required"
-                class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 text-sm outline-none bg-white"
+              <div
+                v-for="(_, index) in eventCodes"
+                :key="index"
+                class="flex items-center gap-2"
               >
-                <option value="" disabled>Vui lòng chọn</option>
-                <option v-for="opt in field.options" :key="opt.value" :value="opt.value">
-                  {{ opt.label }}
-                </option>
-              </select>
+                <div class="w-7 h-7 rounded-lg bg-sky-50 text-sky-700 font-bold text-xs flex items-center justify-center shrink-0 border border-sky-200">
+                  #{{ index + 1 }}
+                </div>
+                <input
+                  v-model="eventCodes[index]"
+                  type="text"
+                  required
+                  :placeholder="`Nhập mã code sự kiện thứ ${index + 1}...`"
+                  class="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-sm outline-none font-mono"
+                />
+                <!-- Nút xóa code (nếu có từ 2 code trở lên) -->
+                <button
+                  v-if="eventCodes.length > 1"
+                  type="button"
+                  @click="removeCodeField(index)"
+                  class="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 transition cursor-pointer"
+                  title="Xóa ô này"
+                >
+                  <Trash2 class="w-4 h-4" />
+                </button>
+              </div>
 
-              <!-- Textarea Input -->
-              <textarea
-                v-else-if="field.type === 'textarea'"
-                v-model="formData[field.name]"
-                :required="field.required"
-                rows="3"
-                class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 text-sm outline-none"
-              ></textarea>
+              <!-- Nút Thêm ô Code -->
+              <div class="pt-1">
+                <button
+                  type="button"
+                  @click="addCodeField"
+                  class="flex items-center gap-1.5 text-xs font-semibold text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 px-3.5 py-2 rounded-xl border border-sky-200 transition cursor-pointer"
+                >
+                  <Plus class="w-4 h-4" /> Thêm Code Sự Kiện Khác
+                </button>
+              </div>
             </div>
 
             <!-- Customer Note -->
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Ghi chú cho đơn hàng</label>
+            <div class="pt-2">
+              <label class="block text-sm font-medium text-slate-700 mb-1">Ghi chú cho đơn hàng (nếu có)</label>
               <textarea
                 v-model="customerNote"
                 rows="2"
                 placeholder="Ghi chú thêm nếu cần thiết..."
-                class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 text-sm outline-none"
+                class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-sm outline-none"
               ></textarea>
             </div>
 
             <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
               <div>
-                <span class="text-xs text-slate-400 block">Tổng tiền</span>
-                <span class="text-xl font-bold text-sky-600">{{ formatVND(product.price) }}</span>
+                <span class="text-xs text-slate-400 block">Tổng tiền ({{ eventCodes.length }} code)</span>
+                <span class="text-2xl font-black text-sky-600">{{ formatVND(totalPrice) }}</span>
               </div>
 
               <button
                 type="submit"
-                class="px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-sm shadow-md shadow-sky-500/20 transition hover:shadow-lg"
+                class="px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-sm shadow-md shadow-sky-500/20 transition hover:shadow-lg cursor-pointer"
               >
-                Tiếp tục thanh toán
+                Tiếp tục thanh toán ({{ eventCodes.length }} đơn)
               </button>
             </div>
           </form>
@@ -122,19 +122,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { formatVND } from '@/utils/format'
-import { ArrowLeft, ShieldCheck } from 'lucide-vue-next'
+import { ArrowLeft, ShieldCheck, Plus, Trash2 } from 'lucide-vue-next'
 import { productService } from '@/services/product.service'
-import type { Product, InputFieldSchema } from '@/types'
+import type { Product } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
 
 const product = ref<Product | null>(null)
-const formData = ref<Record<string, any>>({})
+// Mảng lưu danh sách code, mặc định có 1 ô
+const eventCodes = ref<string[]>([''])
 const customerNote = ref('')
+
+const totalPrice = computed(() => {
+  if (!product.value) return 0
+  return product.value.price * eventCodes.value.length
+})
 
 onMounted(async () => {
   const slug = route.params.slug as string
@@ -142,9 +148,6 @@ onMounted(async () => {
     const data = await productService.getProductBySlug(slug)
     if (data) {
       product.value = data
-      product.value.inputSchema?.forEach((f: InputFieldSchema) => {
-        formData.value[f.name] = ''
-      })
       return
     }
   } catch (err) {
@@ -154,30 +157,41 @@ onMounted(async () => {
   // Fallback ban đầu
   product.value = {
     id: '1',
-    name: 'CSUC Gói Cơ Bản 100K',
+    name: 'Gói Dịch Vụ',
     slug,
-    category: 'Gói Cơ Bản',
-    description: 'Thích hợp cho nhu cầu trải nghiệm ngắn hạn, xử lý siêu tốc tự động trong 30 giây.',
+    category: 'Gói Phổ Biến',
+    description: 'Xử lý tự động nhanh chóng.',
     originalPrice: 120000,
     price: 99000,
     status: 'active',
     inputSchema: [
-      { name: 'accountId', label: 'Tài khoản / ID nhận quà', type: 'text', required: true, placeholder: 'Nhập ID game hoặc link' },
-      { name: 'server', label: 'Máy chủ', type: 'select', required: true, options: [{ label: 'Server Mặt Trời', value: 's1' }, { label: 'Server Ngôi Sao', value: 's2' }] }
+      { name: 'accountId', label: 'Code Sự kiện', type: 'text', required: true, placeholder: 'Dán mã code sự kiện tại đây' }
     ]
   }
-
-  // Khởi tạo field data
-  product.value.inputSchema.forEach((f: InputFieldSchema) => {
-    formData.value[f.name] = ''
-  })
 })
 
+const addCodeField = () => {
+  eventCodes.value.push('')
+}
+
+const removeCodeField = (index: number) => {
+  if (eventCodes.value.length > 1) {
+    eventCodes.value.splice(index, 1)
+  }
+}
+
 const proceedToCheckout = () => {
-  // Lưu giỏ hàng / order draft tạm thời vào sessionStorage và điều hướng checkout
+  // Lọc lấy các code đã nhập hợp lệ
+  const validCodes = eventCodes.value.map(c => c.trim()).filter(Boolean)
+  if (validCodes.length === 0) {
+    alert('Vui lòng nhập ít nhất một Code Sự kiện!')
+    return
+  }
+
+  // Lưu giỏ hàng tạm thời với danh sách codes
   sessionStorage.setItem('checkout_draft', JSON.stringify({
     product: product.value,
-    inputs: formData.value,
+    codes: validCodes,
     customerNote: customerNote.value,
   }))
   router.push('/checkout')
