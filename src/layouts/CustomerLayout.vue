@@ -36,10 +36,6 @@
             <MessageCircle class="w-4 h-4 text-sky-500" />
             <span>Nhóm Zalo Hỗ Trợ</span>
           </a>
-          <router-link v-if="authStore.isAdmin" to="/admin" class="text-sky-600 bg-sky-50 hover:bg-sky-100 px-3 py-1.5 rounded-lg font-medium transition-colors border border-sky-200 flex items-center gap-1.5">
-            <ShieldCheck class="w-4 h-4" />
-            Quản trị Admin
-          </router-link>
         </nav>
 
         <!-- Right Side / User Actions -->
