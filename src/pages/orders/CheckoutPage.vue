@@ -212,12 +212,13 @@ const applyVoucher = async () => {
     const res = await orderService.validateVoucher({
       code: voucherCode.value.trim().toUpperCase(),
       productId: orderDraft.value.product.id,
+      quantity: codeList.value.length, // Tính giảm giá trên tổng số lượng code
     })
 
     if (res.valid && res.discountAmount > 0) {
       discountAmount.value = res.discountAmount
       isVoucherValid.value = true
-      voucherMessage.value = `Áp dụng mã thành công: Giảm ${formatVND(res.discountAmount)}!`
+      voucherMessage.value = `Áp dụng mã thành công: Giảm ${formatVND(res.discountAmount)} trên tổng đơn!`
     } else {
       discountAmount.value = 0
       isVoucherValid.value = false
@@ -238,26 +239,29 @@ const submitOrder = async () => {
   isSubmitting.value = true
 
   const codesToOrder = codeList.value
+  const masterKey = generateIdempotencyKey()
 
   try {
-    // Duyệt qua từng code và tạo từng đơn hàng riêng biệt
-    // Mỗi đơn gửi 1 Idempotency-Key ngẫu nhiên riêng
-    for (let i = 0; i < codesToOrder.length; i++) {
-      const codeStr = codesToOrder[i]
-      const idempotencyKey = generateIdempotencyKey() + `_${i}`
-
-      // Chỉ áp voucher cho đơn hàng đầu tiên nếu có mã
-      const vCode = i === 0 ? (voucherCode.value || undefined) : undefined
-
+    if (codesToOrder.length > 1) {
+      // Gửi toàn bộ danh sách codes kèm voucher lên Backend 1 lần duy nhất
+      // Backend sẽ tính giảm giá trên tổng tiền và tự động tách thành N đơn lẻ
+      await orderService.createMultiOrders({
+        productId: orderDraft.value.product.id,
+        codes: codesToOrder,
+        voucherCode: voucherCode.value || undefined,
+        customerNote: orderDraft.value.customerNote,
+      }, masterKey)
+    } else {
+      // Đơn 1 code thông thường
       await orderService.createOrder({
         productId: orderDraft.value.product.id,
         inputs: {
-          accountId: codeStr,
-          code: codeStr,
+          accountId: codesToOrder[0],
+          code: codesToOrder[0],
         },
-        voucherCode: vCode,
+        voucherCode: voucherCode.value || undefined,
         customerNote: orderDraft.value.customerNote,
-      }, idempotencyKey)
+      }, masterKey)
     }
 
     // Lấy lại số dư ví thực từ backend sau khi thanh toán thành công

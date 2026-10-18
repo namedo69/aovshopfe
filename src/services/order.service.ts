@@ -8,9 +8,17 @@ export interface CreateOrderDTO {
   customerNote?: string
 }
 
+export interface CreateMultiCodeOrderDTO {
+  productId: string
+  codes: string[]
+  voucherCode?: string
+  customerNote?: string
+}
+
 export interface ValidateVoucherDTO {
   code: string
   productId: string
+  quantity?: number
 }
 
 export interface ValidateVoucherResponse {
@@ -53,11 +61,12 @@ export function mapBackendOrder(raw: any): Order {
 }
 
 export const orderService = {
-  // Kiểm tra mã voucher
+  // Kiểm tra mã voucher (truyền đúng số lượng items theo tổng số code)
   async validateVoucher(data: ValidateVoucherDTO): Promise<ValidateVoucherResponse> {
+    const qty = data.quantity && data.quantity > 0 ? data.quantity : 1
     const res = await apiClient.post<any>('/vouchers/validate', {
       code: data.code,
-      items: [{ productId: data.productId, quantity: 1 }],
+      items: [{ productId: data.productId, quantity: qty }],
     })
     const discountAmount = res.data?.estimatedDiscount ?? res.data?.discountAmount ?? 0
     return {
@@ -67,7 +76,7 @@ export const orderService = {
     }
   },
 
-  // Tạo đơn hàng (chuẩn format BE: { items: [...], voucherCode, customerNote })
+  // Tạo đơn hàng đơn lẻ
   async createOrder(data: CreateOrderDTO, idempotencyKey: string): Promise<Order> {
     const payload = {
       items: [
@@ -87,6 +96,30 @@ export const orderService = {
       },
     })
     return mapBackendOrder(res.data)
+  },
+
+  // Tạo nhiều đơn hàng cùng lúc kèm giảm giá voucher trên toàn bộ tổng tiền
+  async createMultiOrders(data: CreateMultiCodeOrderDTO, idempotencyKey: string): Promise<any> {
+    const payload = {
+      items: data.codes.map(codeStr => ({
+        productId: data.productId,
+        quantity: 1,
+        customerInput: {
+          accountId: codeStr,
+          code: codeStr,
+        },
+      })),
+      voucherCode: data.voucherCode,
+      customerNote: data.customerNote,
+      splitOrders: true, // Backend sẽ tự động tách thành từng đơn riêng biệt
+    }
+
+    const res = await apiClient.post<any>('/orders', payload, {
+      headers: {
+        'Idempotency-Key': idempotencyKey,
+      },
+    })
+    return res.data
   },
 
   // Danh sách đơn hàng của khách
