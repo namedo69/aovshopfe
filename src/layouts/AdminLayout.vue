@@ -60,7 +60,7 @@
           active-class="bg-sky-600 text-white hover:bg-sky-600"
         >
           <Banknote class="w-4 h-4" />
-          Giao dịch nạp SePay
+          Giao dịch nạp tiền
         </router-link>
 
         <router-link

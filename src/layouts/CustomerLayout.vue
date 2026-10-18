@@ -126,7 +126,7 @@
             <span class="text-lg font-bold text-slate-800">langxang.shop</span>
           </div>
           <p class="text-slate-500 max-w-sm text-sm leading-relaxed">
-            Hệ thống cung cấp dịch vụ và tài khoản game uy tín, tự động hoá thanh toán qua VietQR SePay nhanh chóng 24/7.
+            Hệ thống cung cấp dịch vụ và tài khoản game uy tín, tự động hoá nạp tiền qua VietQR nhanh chóng 24/7.
           </p>
         </div>
 
@@ -134,7 +134,7 @@
           <h4 class="font-semibold text-slate-800 mb-3">Dịch vụ</h4>
           <ul class="space-y-2">
             <li><router-link to="/products" class="hover:text-sky-600 transition">Danh sách gói</router-link></li>
-            <li><router-link to="/deposit" class="hover:text-sky-600 transition">Nạp tiền SePay</router-link></li>
+            <li><router-link to="/deposit" class="hover:text-sky-600 transition">Nạp tiền vào ví</router-link></li>
             <li><router-link to="/orders" class="hover:text-sky-600 transition">Tra cứu đơn</router-link></li>
           </ul>
         </div>

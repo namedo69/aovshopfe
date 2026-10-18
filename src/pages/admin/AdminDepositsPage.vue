@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-slate-800">Lịch Sử Nạp Tiền & Cấu Hình SePay</h1>
+        <h1 class="text-2xl font-bold text-slate-800">Lịch Sử Nạp Tiền & Cấu Hình Ngân Hàng</h1>
         <p class="text-sm text-slate-500">Đối soát giao dịch chuyển khoản VietQR và cấu hình tài khoản ngân hàng nhận tiền</p>
       </div>
 
@@ -58,7 +58,7 @@
     <!-- Loading -->
     <div v-if="isLoading" class="p-12 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
       <Loader2 class="w-8 h-8 animate-spin mx-auto mb-2 text-sky-500" />
-      <span>Đang tải danh sách nạp tiền từ SePay...</span>
+      <span>Đang tải danh sách nạp tiền...</span>
     </div>
 
     <!-- Deposits Table -->
@@ -73,7 +73,7 @@
           <tr>
             <th class="py-3.5 px-6 font-semibold">Mã Thanh Toán</th>
             <th class="py-3.5 px-6 font-semibold">Số Tiền Nạp</th>
-            <th class="py-3.5 px-6 font-semibold">Mã SePay ID</th>
+            <th class="py-3.5 px-6 font-semibold">Mã GD Ngân Hàng</th>
             <th class="py-3.5 px-6 font-semibold">Thời Gian Tạo</th>
             <th class="py-3.5 px-6 font-semibold">Trạng Thái</th>
             <th class="py-3.5 px-6 font-semibold text-right">Thao Tác</th>
@@ -88,7 +88,7 @@
               +{{ formatVND(dep.amount) }}
             </td>
             <td class="py-4 px-6 font-mono text-xs text-slate-400">
-              {{ dep.sepayTransactionId || 'Tự động duyệt' }}
+              {{ dep.sepayTransactionId || 'Tự động' }}
             </td>
             <td class="py-4 px-6 text-xs text-slate-400">
               {{ formatDate(dep.createdAt) }}

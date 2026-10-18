@@ -28,7 +28,7 @@
         <div v-else class="text-2xl font-black text-slate-800">
           {{ formatVND(stats.totalDeposits) }}
         </div>
-        <span class="text-xs text-slate-400 mt-1 block">Từ giao dịch SePay</span>
+        <span class="text-xs text-slate-400 mt-1 block">Từ giao dịch chuyển khoản</span>
       </div>
 
       <!-- Doanh thu đơn -->

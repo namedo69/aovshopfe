@@ -116,7 +116,7 @@ onMounted(async () => {
       balanceBefore: 0,
       balanceAfter: 100000,
       referenceId: 'SEPAY819203',
-      description: 'Nạp tiền SePay VietQR',
+      description: 'Nạp tiền VietQR tự động',
       status: 'completed',
       createdAt: new Date().toISOString(),
     },

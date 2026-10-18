@@ -4,7 +4,7 @@
     <section class="relative overflow-hidden bg-gradient-to-b from-sky-100 via-sky-50 to-white pt-12 pb-20">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-800 border border-sky-300 shadow-xs mb-4">
-          <Sparkles class="w-3.5 h-3.5 text-sky-600" /> Nạp tự động VietQR qua SePay 24/7
+          <Sparkles class="w-3.5 h-3.5 text-sky-600" /> Nạp tiền tự động qua VietQR 24/7
         </span>
         <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight">
           Hệ Thống Dịch Vụ <span class="bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">Siêu Tốc</span>
@@ -51,7 +51,7 @@
           <div class="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center mb-4">
             <QrCode class="w-6 h-6" />
           </div>
-          <h3 class="text-lg font-bold text-slate-800">VietQR SePay Chuẩn</h3>
+          <h3 class="text-lg font-bold text-slate-800">Quét Mã VietQR Chuẩn</h3>
           <p class="mt-2 text-slate-600 text-sm leading-relaxed">
             Quét mã QR chuyển khoản chính xác tới từng đồng, cộng tiền vào ví lập tức không cần đợi duyệt tay.
           </p>

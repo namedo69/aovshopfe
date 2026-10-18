@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
     <h1 class="text-3xl font-bold text-slate-900 mb-2">Nạp Tiền Vào Ví</h1>
-    <p class="text-slate-500 mb-8">Thanh toán tự động qua VietQR liên kết SePay trong vòng 1-3 phút</p>
+    <p class="text-slate-500 mb-8">Thanh toán tự động qua mã quét VietQR trong vòng 30 giây - 1 phút</p>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
       <!-- Cột nhập tiền bên trái -->
@@ -77,7 +77,7 @@
               <div class="shrink-0 p-3 bg-white border border-slate-200 rounded-2xl shadow-xs text-center">
                 <img
                   :src="currentDeposit.qrCodeUrl"
-                  alt="VietQR SePay"
+                  alt="Mã VietQR"
                   class="w-48 h-48 object-contain rounded-xl"
                 />
                 <span class="text-[11px] text-slate-400 mt-2 block">Quét bằng App Ngân Hàng</span>
@@ -133,7 +133,7 @@
             <!-- Polling pulse indicator -->
             <div class="p-3 bg-sky-50/70 border border-sky-100 rounded-xl flex items-center gap-3 text-xs text-sky-800">
               <Loader2 class="w-4 h-4 animate-spin text-sky-600 shrink-0" />
-              <span>Hệ thống đang tự động kiểm tra giao dịch từ SePay (mỗi 3 giây). Sau khi chuyển khoản thành công màn hình sẽ tự động cập nhật...</span>
+              <span>Hệ thống đang tự động kiểm tra giao dịch (mỗi 3 giây). Sau khi chuyển khoản thành công màn hình sẽ tự động cập nhật...</span>
             </div>
           </div>
 
