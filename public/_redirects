@@ -1,0 +1,5 @@
+/*
+  Rewrite rules cho Render Static Site (SPA routing)
+  Mọi đường dẫn SPA chưa khớp file tĩnh đều trả về /index.html
+*/
+/*    /index.html   200
