@@ -14,4 +14,10 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  preview: {
+    allowedHosts: true, // Cho phép tất cả các host (bao gồm *.onrender.com và custom domain)
+  },
+  server: {
+    allowedHosts: true,
+  },
 })
