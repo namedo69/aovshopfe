@@ -55,6 +55,44 @@
       </button>
     </div>
 
+    <!-- Thanh Tìm Kiếm & Bộ Lọc Trạng Thái Nạp -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="relative w-full md:w-80">
+        <input
+          v-model="depositSearchQuery"
+          type="text"
+          placeholder="Tìm theo mã thanh toán hoặc mã GD..."
+          class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-xs outline-none bg-slate-50/50 font-mono"
+        />
+        <Search class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+      </div>
+
+      <div class="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
+        <button
+          v-for="status in depositStatusFilters"
+          :key="status.value"
+          @click="currentDepositFilter = status.value"
+          :class="[
+            'px-3 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer',
+            currentDepositFilter === status.value
+              ? 'bg-sky-600 text-white shadow-xs'
+              : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+          ]"
+        >
+          {{ status.label }}
+          <span
+            v-if="status.count !== undefined"
+            :class="[
+              'ml-1 px-1.5 py-0.2 rounded-full text-[10px]',
+              currentDepositFilter === status.value ? 'bg-sky-700 text-white' : 'bg-slate-200 text-slate-700'
+            ]"
+          >
+            {{ status.count }}
+          </span>
+        </button>
+      </div>
+    </div>
+
     <!-- Loading -->
     <div v-if="isLoading" class="p-12 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
       <Loader2 class="w-8 h-8 animate-spin mx-auto mb-2 text-sky-500" />
@@ -63,9 +101,9 @@
 
     <!-- Deposits Table -->
     <div v-else class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-      <div v-if="depositsList.length === 0" class="p-12 text-center text-slate-400">
+      <div v-if="filteredDeposits.length === 0" class="p-12 text-center text-slate-400">
         <Banknote class="w-12 h-12 mx-auto mb-3 text-slate-300 stroke-[1.2]" />
-        <p class="font-medium text-slate-600">Chưa có giao dịch nạp nào</p>
+        <p class="font-medium text-slate-600">Không tìm thấy giao dịch nạp nào</p>
       </div>
 
       <table v-else class="w-full text-left text-sm">
@@ -80,7 +118,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 text-slate-700">
-          <tr v-for="dep in depositsList" :key="dep.id" class="hover:bg-slate-50/50 transition">
+          <tr v-for="dep in filteredDeposits" :key="dep.id" class="hover:bg-slate-50/50 transition">
             <td class="py-4 px-6 font-mono font-bold text-sky-700">
               {{ dep.paymentCode || dep.orderCode }}
             </td>
@@ -233,9 +271,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { formatVND, formatDate } from '@/utils/format'
-import { Banknote, RotateCcw, Loader2, Building2 } from 'lucide-vue-next'
+import { Banknote, RotateCcw, Loader2, Building2, Search } from 'lucide-vue-next'
 import { adminService } from '@/services/admin.service'
 
 const depositsList = ref<any[]>([])
@@ -244,6 +282,36 @@ const isLoading = ref(false)
 const isSubmitting = ref(false)
 const alertMessage = ref('')
 const alertType = ref<'success' | 'error'>('success')
+
+// Filter & Search
+const depositSearchQuery = ref('')
+const currentDepositFilter = ref<string>('all')
+
+const depositStatusFilters = computed(() => [
+  { label: 'Tất cả', value: 'all', count: depositsList.value.length },
+  { label: 'Chờ chuyển khoản', value: 'pending', count: depositsList.value.filter(d => d.status === 'pending').length },
+  { label: 'Thành công', value: 'completed', count: depositsList.value.filter(d => d.status === 'completed').length },
+  { label: 'Hết hạn', value: 'expired', count: depositsList.value.filter(d => d.status === 'expired').length },
+])
+
+const filteredDeposits = computed(() => {
+  return depositsList.value.filter((dep) => {
+    // 1. Lọc theo trạng thái
+    if (currentDepositFilter.value !== 'all') {
+      if (dep.status !== currentDepositFilter.value) return false
+    }
+
+    // 2. Tìm kiếm theo Mã thanh toán hoặc SePay ID
+    if (depositSearchQuery.value.trim()) {
+      const q = depositSearchQuery.value.trim().toLowerCase()
+      const code = (dep.paymentCode || dep.orderCode || '').toLowerCase()
+      const sepayId = String(dep.sepayTransactionId || '').toLowerCase()
+      if (!code.includes(q) && !sepayId.includes(q)) return false
+    }
+
+    return true
+  })
+})
 
 // Modal state
 const isBankModalOpen = ref(false)

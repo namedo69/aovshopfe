@@ -9,7 +9,7 @@
       <button
         @click="loadUsers"
         :disabled="isLoading"
-        class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition"
+        class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition cursor-pointer"
       >
         <RotateCcw :class="['w-3.5 h-3.5', isLoading && 'animate-spin text-sky-600']" />
         <span>Làm mới</span>
@@ -22,6 +22,44 @@
       <button @click="alertMessage = ''" class="font-bold ml-4">✕</button>
     </div>
 
+    <!-- Search & Filter bar -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="relative w-full md:w-80">
+        <input
+          v-model="userSearchQuery"
+          type="text"
+          placeholder="Tìm theo email hoặc họ tên..."
+          class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-xs outline-none bg-slate-50/50"
+        />
+        <Search class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+      </div>
+
+      <div class="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
+        <button
+          v-for="role in roleFilters"
+          :key="role.value"
+          @click="currentRoleFilter = role.value"
+          :class="[
+            'px-3 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer',
+            currentRoleFilter === role.value
+              ? 'bg-sky-600 text-white shadow-xs'
+              : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+          ]"
+        >
+          {{ role.label }}
+          <span
+            v-if="role.count !== undefined"
+            :class="[
+              'ml-1 px-1.5 py-0.2 rounded-full text-[10px]',
+              currentRoleFilter === role.value ? 'bg-sky-700 text-white' : 'bg-slate-200 text-slate-700'
+            ]"
+          >
+            {{ role.count }}
+          </span>
+        </button>
+      </div>
+    </div>
+
     <!-- Loading -->
     <div v-if="isLoading" class="p-12 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
       <Loader2 class="w-8 h-8 animate-spin mx-auto mb-2 text-sky-500" />
@@ -30,9 +68,9 @@
 
     <!-- Users Table -->
     <div v-else class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-      <div v-if="usersList.length === 0" class="p-12 text-center text-slate-400">
+      <div v-if="filteredUsers.length === 0" class="p-12 text-center text-slate-400">
         <Users class="w-12 h-12 mx-auto mb-3 text-slate-300 stroke-[1.2]" />
-        <p class="font-medium text-slate-600">Chưa có người dùng nào trong hệ thống</p>
+        <p class="font-medium text-slate-600">Không tìm thấy người dùng nào phù hợp</p>
       </div>
 
       <table v-else class="w-full text-left text-sm">
@@ -47,7 +85,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 text-slate-700">
-          <tr v-for="user in usersList" :key="user.id" class="hover:bg-slate-50/50 transition">
+          <tr v-for="user in filteredUsers" :key="user.id" class="hover:bg-slate-50/50 transition">
             <td class="py-4 px-6">
               <div class="font-medium text-slate-900">{{ user.name || 'Chưa đặt tên' }}</div>
               <div class="text-xs text-slate-400 font-mono">{{ user.email }}</div>
@@ -192,7 +230,7 @@
               type="text"
               required
               placeholder="VD: Nạp bù sự kiện, hoàn tiền giao dịch..."
-              class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-sm outline-none"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-sm outline-none"
             />
           </div>
 
@@ -228,7 +266,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { formatVND, formatDate } from '@/utils/format'
-import { Users, RotateCcw, Loader2, PlusCircle } from 'lucide-vue-next'
+import { Users, RotateCcw, Loader2, PlusCircle, Search } from 'lucide-vue-next'
 import { adminService, type AdminUserListItem } from '@/services/admin.service'
 
 const usersList = ref<AdminUserListItem[]>([])
@@ -236,6 +274,38 @@ const isLoading = ref(false)
 const isSubmitting = ref(false)
 const alertMessage = ref('')
 const alertType = ref<'success' | 'error'>('success')
+
+// Filter & Search
+const userSearchQuery = ref('')
+const currentRoleFilter = ref<string>('all')
+
+const roleFilters = computed(() => [
+  { label: 'Tất cả', value: 'all', count: usersList.value.length },
+  { label: 'Khách hàng', value: 'customer', count: usersList.value.filter(u => u.role === 'customer').length },
+  { label: 'Admin', value: 'admin', count: usersList.value.filter(u => u.role === 'admin').length },
+  { label: 'Đã khóa', value: 'blocked', count: usersList.value.filter(u => u.status === 'blocked').length },
+])
+
+const filteredUsers = computed(() => {
+  return usersList.value.filter((user) => {
+    // Lọc theo role hoặc status
+    if (currentRoleFilter.value === 'blocked') {
+      if (user.status !== 'blocked') return false
+    } else if (currentRoleFilter.value !== 'all') {
+      if (user.role !== currentRoleFilter.value) return false
+    }
+
+    // Tìm kiếm
+    if (userSearchQuery.value.trim()) {
+      const q = userSearchQuery.value.trim().toLowerCase()
+      const matchEmail = user.email?.toLowerCase().includes(q)
+      const matchName = user.name?.toLowerCase().includes(q)
+      if (!matchEmail && !matchName) return false
+    }
+
+    return true
+  })
+})
 
 // Modal State
 const isBalanceModalOpen = ref(false)

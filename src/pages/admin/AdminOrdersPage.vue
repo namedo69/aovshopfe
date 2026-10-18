@@ -22,6 +22,46 @@
       <button @click="alertMessage = ''" class="font-bold ml-4">✕</button>
     </div>
 
+    <!-- Thanh Tìm Kiếm & Bộ Lọc Trạng Thái -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
+      <!-- Search Input -->
+      <div class="relative w-full md:w-80">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Tìm theo mã đơn hoặc User ID..."
+          class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-xs outline-none bg-slate-50/50"
+        />
+        <Search class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+      </div>
+
+      <!-- Filter Buttons -->
+      <div class="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
+        <button
+          v-for="tab in filterTabs"
+          :key="tab.value"
+          @click="currentStatusFilter = tab.value"
+          :class="[
+            'px-3 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer',
+            currentStatusFilter === tab.value
+              ? 'bg-sky-600 text-white shadow-xs'
+              : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+          ]"
+        >
+          {{ tab.label }}
+          <span
+            v-if="tab.count !== undefined"
+            :class="[
+              'ml-1 px-1.5 py-0.2 rounded-full text-[10px]',
+              currentStatusFilter === tab.value ? 'bg-sky-700 text-white' : 'bg-slate-200 text-slate-700'
+            ]"
+          >
+            {{ tab.count }}
+          </span>
+        </button>
+      </div>
+    </div>
+
     <!-- Loading -->
     <div v-if="isLoading" class="p-12 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
       <Loader2 class="w-8 h-8 animate-spin mx-auto mb-2 text-sky-500" />
@@ -30,9 +70,10 @@
 
     <!-- Orders Table -->
     <div v-else class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-      <div v-if="ordersList.length === 0" class="p-12 text-center text-slate-400">
+      <div v-if="filteredOrders.length === 0" class="p-12 text-center text-slate-400">
         <ShoppingCart class="w-12 h-12 mx-auto mb-3 text-slate-300 stroke-[1.2]" />
-        <p class="font-medium text-slate-600">Chưa có đơn hàng nào trong hệ thống</p>
+        <p class="font-medium text-slate-600">Không tìm thấy đơn hàng nào phù hợp</p>
+        <p class="text-xs text-slate-400 mt-1">Thử thay đổi bộ lọc trạng thái hoặc từ khóa tìm kiếm</p>
       </div>
 
       <table v-else class="w-full text-left text-sm">
@@ -47,7 +88,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 text-slate-700">
-          <tr v-for="order in ordersList" :key="order.id" class="hover:bg-slate-50/50 transition">
+          <tr v-for="order in filteredOrders" :key="order.id" class="hover:bg-slate-50/50 transition">
             <td class="py-4 px-6 font-mono font-medium text-slate-900">
               {{ order.orderCode }}
             </td>
@@ -175,9 +216,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { formatVND, formatDate } from '@/utils/format'
-import { ShoppingCart, RotateCcw, Loader2 } from 'lucide-vue-next'
+import { ShoppingCart, RotateCcw, Loader2, Search } from 'lucide-vue-next'
 import { adminService } from '@/services/admin.service'
 import type { Order, OrderStatus } from '@/types'
 
@@ -186,6 +227,10 @@ const isLoading = ref(false)
 const isSubmitting = ref(false)
 const alertMessage = ref('')
 const alertType = ref<'success' | 'error'>('success')
+
+// Filters
+const searchQuery = ref('')
+const currentStatusFilter = ref<string>('all')
 
 // Modal state
 const isModalOpen = ref(false)
@@ -213,6 +258,35 @@ const statusStyles: Record<OrderStatus, string> = {
   refunded: 'bg-purple-50 text-purple-700',
   cancelled: 'bg-slate-100 text-slate-600',
 }
+
+const filterTabs = computed(() => [
+  { label: 'Tất cả', value: 'all', count: ordersList.value.length },
+  { label: 'Chờ xử lý', value: 'pending_group', count: ordersList.value.filter(o => ['queued', 'sending', 'processing'].includes(o.status)).length },
+  { label: 'Hoàn thành', value: 'completed', count: ordersList.value.filter(o => o.status === 'completed').length },
+  { label: 'Lỗi', value: 'failed', count: ordersList.value.filter(o => o.status === 'failed').length },
+  { label: 'Đã hoàn tiền', value: 'refunded', count: ordersList.value.filter(o => o.status === 'refunded').length },
+])
+
+const filteredOrders = computed(() => {
+  return ordersList.value.filter((order) => {
+    // 1. Lọc theo trạng thái
+    if (currentStatusFilter.value === 'pending_group') {
+      if (!['queued', 'sending', 'processing'].includes(order.status)) return false
+    } else if (currentStatusFilter.value !== 'all') {
+      if (order.status !== currentStatusFilter.value) return false
+    }
+
+    // 2. Tìm kiếm theo OrderCode hoặc User ID
+    if (searchQuery.value.trim()) {
+      const q = searchQuery.value.trim().toLowerCase()
+      const matchCode = order.orderCode?.toLowerCase().includes(q)
+      const matchId = order.id?.toLowerCase().includes(q)
+      if (!matchCode && !matchId) return false
+    }
+
+    return true
+  })
+})
 
 const showAlert = (msg: string, type: 'success' | 'error' = 'success') => {
   alertMessage.value = msg
