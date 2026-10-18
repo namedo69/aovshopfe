@@ -39,8 +39,8 @@
         <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-bold text-slate-800">Nhập Danh Sách Code Sự Kiện</h2>
-            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-700">
-              Tổng cộng: {{ eventCodes.length }} code
+            <span :class="['text-xs font-semibold px-2.5 py-1 rounded-full', eventCodes.length >= 10 ? 'bg-amber-100 text-amber-800' : 'bg-sky-100 text-sky-700']">
+              {{ eventCodes.length }}/10 code (tối đa)
             </span>
           </div>
 
@@ -78,15 +78,20 @@
                 </button>
               </div>
 
-              <!-- Nút Thêm ô Code -->
-              <div class="pt-1">
+              <!-- Nút Thêm ô Code (tối đa 10 code) -->
+              <div class="pt-1 flex items-center justify-between">
                 <button
+                  v-if="eventCodes.length < 10"
                   type="button"
                   @click="addCodeField"
                   class="flex items-center gap-1.5 text-xs font-semibold text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 px-3.5 py-2 rounded-xl border border-sky-200 transition cursor-pointer"
                 >
                   <Plus class="w-4 h-4" /> Thêm Code Sự Kiện Khác
                 </button>
+                <span v-else class="text-xs text-amber-600 font-medium">
+                  ⚠️ Đã đạt giới hạn tối đa 10 code cho 1 lần thanh toán.
+                </span>
+                <span class="text-[11px] text-slate-400">Tối đa 10 code / lần</span>
               </div>
             </div>
 
@@ -171,6 +176,10 @@ onMounted(async () => {
 })
 
 const addCodeField = () => {
+  if (eventCodes.value.length >= 10) {
+    alert('Mỗi lần thanh toán chỉ hỗ trợ tối đa 10 Code Sự kiện!')
+    return
+  }
   eventCodes.value.push('')
 }
 
@@ -185,6 +194,11 @@ const proceedToCheckout = () => {
   const validCodes = eventCodes.value.map(c => c.trim()).filter(Boolean)
   if (validCodes.length === 0) {
     alert('Vui lòng nhập ít nhất một Code Sự kiện!')
+    return
+  }
+
+  if (validCodes.length > 10) {
+    alert('Số lượng code vượt quá giới hạn tối đa (10 code / 1 lần thanh toán)!')
     return
   }
 
