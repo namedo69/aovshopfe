@@ -1,6 +1,7 @@
 import { apiClient } from './api'
 import type { Product, BackendProduct, Order, Deposit, Voucher, User } from '@/types'
 import { mapBackendProduct } from './product.service'
+import { mapBackendOrder } from './order.service'
 
 export interface AdminReportDashboard {
   totalDeposits: number
@@ -129,13 +130,16 @@ export const adminService = {
 
   // Quản lý đơn hàng
   async getOrders(params?: any): Promise<Order[]> {
-    const res = await apiClient.get<Order[]>('/admin/orders', { params })
-    return res.data
+    const res = await apiClient.get<any[]>('/admin/orders', { params })
+    if (Array.isArray(res.data)) {
+      return res.data.map(mapBackendOrder)
+    }
+    return []
   },
 
   async getOrderById(id: string): Promise<Order> {
-    const res = await apiClient.get<Order>(`/admin/orders/${id}`)
-    return res.data
+    const res = await apiClient.get<any>(`/admin/orders/${id}`)
+    return mapBackendOrder(res.data)
   },
 
   async updateOrderStatus(id: string, status: string, reason?: string): Promise<void> {
