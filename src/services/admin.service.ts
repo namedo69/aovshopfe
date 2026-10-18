@@ -150,7 +150,17 @@ export const adminService = {
     await apiClient.post(`/admin/orders/${id}/refund`, { reason })
   },
 
-  // Quản lý giao dịch nạp SePay
+  // Quản lý giao dịch nạp SePay & Cấu hình tài khoản ngân hàng
+  async getBankAccount(): Promise<{ id: string; bankCode: string; accountNumber: string; accountName: string; isActive: boolean } | null> {
+    const res = await apiClient.get('/admin/deposits/bank-account')
+    return res.data
+  },
+
+  async updateBankAccount(data: { bankCode: string; accountNumber: string; accountName: string }): Promise<any> {
+    const res = await apiClient.post('/admin/deposits/bank-account', data)
+    return res.data
+  },
+
   async getDeposits(params?: any): Promise<Deposit[]> {
     const res = await apiClient.get<Deposit[]>('/admin/deposits', { params })
     return res.data
