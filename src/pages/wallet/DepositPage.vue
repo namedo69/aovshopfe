@@ -183,13 +183,12 @@
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
 import { formatVND, copyToClipboard } from '@/utils/format'
-import { useWalletStore } from '@/stores/wallet'
+import { useAuthStore } from '@/stores/auth'
 import { walletService } from '@/services/wallet.service'
 import { AlertTriangle, Clock, Copy, Loader2, CheckCircle, QrCode } from 'lucide-vue-next'
 import type { Deposit } from '@/types'
 
-const _walletStore = useWalletStore()
-console.log('Wallet ready:', _walletStore.balance)
+const authStore = useAuthStore()
 
 const quickAmounts = [20000, 50000, 100000, 200000, 500000, 1000000]
 const selectedAmount = ref<number>(50000)
@@ -278,8 +277,9 @@ const startPolling = (paymentCode: string) => {
         currentDeposit.value = dep
         stopPolling()
         if (dep.status === 'completed') {
-          // Lấy lại số dư chuẩn từ backend
-          await _walletStore.fetchWallet()
+          // Lấy lại số dư chuẩn từ backend và cập nhật ngay vào authStore (Header + giao diện)
+          const w = await walletService.getWallet()
+          authStore.updateBalance(w.balance)
         }
       }
     } catch {

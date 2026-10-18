@@ -29,6 +29,27 @@ export interface CreateDepositDTO {
   amount: number
 }
 
+// Chuẩn hoá dữ liệu Deposit từ Backend
+export function mapBackendDeposit(raw: any): Deposit {
+  const code = raw.paymentCode || raw.payment_code || raw.orderCode || raw.order_code || raw.id
+  const bank = raw.bank || {}
+  const qrUrl = raw.qrUrl || raw.qr_url || raw.qrCodeUrl || ''
+
+  return {
+    id: raw.id,
+    orderCode: code,
+    amount: raw.amount,
+    status: raw.status || 'pending',
+    accountNumber: bank.accountNumber || raw.accountNumber || '',
+    accountName: bank.accountName || raw.accountName || '',
+    bankName: bank.bankCode || raw.bankName || '',
+    qrCodeUrl: qrUrl,
+    transferContent: code,
+    expiresAt: raw.expiresAt || raw.expires_at || '',
+    createdAt: raw.createdAt || raw.created_at || '',
+  }
+}
+
 export const walletService = {
   // Lấy số dư ví (hỗ trợ cả balanceAmount của BE và balance)
   async getWallet(): Promise<WalletInfo> {
@@ -62,19 +83,22 @@ export const walletService = {
 
   // Tạo yêu cầu nạp tiền SePay VietQR
   async createDeposit(data: CreateDepositDTO): Promise<Deposit> {
-    const res = await apiClient.post<Deposit>('/deposits', data)
-    return res.data
+    const res = await apiClient.post<any>('/deposits', data)
+    return mapBackendDeposit(res.data)
   },
 
   // Lấy danh sách yêu cầu nạp của khách
   async getDeposits(): Promise<Deposit[]> {
-    const res = await apiClient.get<Deposit[]>('/deposits')
-    return res.data
+    const res = await apiClient.get<any[]>('/deposits')
+    if (Array.isArray(res.data)) {
+      return res.data.map(mapBackendDeposit)
+    }
+    return []
   },
 
   // Kiểm tra trạng thái nạp theo paymentCode
   async getDepositByCode(paymentCode: string): Promise<Deposit> {
-    const res = await apiClient.get<Deposit>(`/deposits/${paymentCode}`)
-    return res.data
+    const res = await apiClient.get<any>(`/deposits/${paymentCode}`)
+    return mapBackendDeposit(res.data)
   },
 }
