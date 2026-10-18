@@ -177,35 +177,25 @@ const applyVoucher = async () => {
   isValidatingVoucher.value = true
   voucherMessage.value = ''
   try {
-    try {
-      const res = await orderService.validateVoucher({
-        code: voucherCode.value.toUpperCase(),
-        productId: orderDraft.value.product.id,
-      })
+    const res = await orderService.validateVoucher({
+      code: voucherCode.value.trim().toUpperCase(),
+      productId: orderDraft.value.product.id,
+    })
 
-      if (res.valid) {
-        discountAmount.value = res.discountAmount
-        isVoucherValid.value = true
-        voucherMessage.value = res.message || `Áp dụng mã giảm ${formatVND(res.discountAmount)} thành công!`
-        return
-      } else {
-        discountAmount.value = 0
-        isVoucherValid.value = false
-        voucherMessage.value = res.message || 'Mã giảm giá không hợp lệ hoặc đã hết lượt dùng.'
-        return
-      }
-    } catch {
-      // Fallback local test nếu backend chưa bật
-      if (voucherCode.value.toUpperCase() === 'CHAOBANMOI') {
-        discountAmount.value = 20000
-        isVoucherValid.value = true
-        voucherMessage.value = 'Áp dụng mã giảm 20.000đ thành công!'
-      } else {
-        discountAmount.value = 0
-        isVoucherValid.value = false
-        voucherMessage.value = 'Mã giảm giá không hợp lệ hoặc đã hết lượt dùng.'
-      }
+    if (res.valid && res.discountAmount > 0) {
+      discountAmount.value = res.discountAmount
+      isVoucherValid.value = true
+      voucherMessage.value = `Áp dụng mã thành công: Giảm ${formatVND(res.discountAmount)}!`
+    } else {
+      discountAmount.value = 0
+      isVoucherValid.value = false
+      voucherMessage.value = res.message || 'Mã giảm giá không hợp lệ hoặc chưa đủ điều kiện áp dụng.'
     }
+  } catch (err: any) {
+    discountAmount.value = 0
+    isVoucherValid.value = false
+    const msg = err.response?.data?.error?.message || err.response?.data?.message
+    voucherMessage.value = msg || 'Mã giảm giá không hợp lệ hoặc đã hết lượt dùng.'
   } finally {
     isValidatingVoucher.value = false
   }

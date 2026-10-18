@@ -55,11 +55,16 @@ export function mapBackendOrder(raw: any): Order {
 export const orderService = {
   // Kiểm tra mã voucher
   async validateVoucher(data: ValidateVoucherDTO): Promise<ValidateVoucherResponse> {
-    const res = await apiClient.post<ValidateVoucherResponse>('/vouchers/validate', {
+    const res = await apiClient.post<any>('/vouchers/validate', {
       code: data.code,
       items: [{ productId: data.productId, quantity: 1 }],
     })
-    return res.data
+    const discountAmount = res.data?.estimatedDiscount ?? res.data?.discountAmount ?? 0
+    return {
+      valid: discountAmount > 0,
+      discountAmount,
+      message: res.data?.message,
+    }
   },
 
   // Tạo đơn hàng (chuẩn format BE: { items: [...], voucherCode, customerNote })
