@@ -28,9 +28,9 @@
 
           <!-- Dữ liệu đã nhập -->
           <div class="mt-4 space-y-2">
-            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Dữ liệu tài khoản</h4>
+            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Thông tin yêu cầu</h4>
             <div v-for="(val, key) in orderDraft.inputs" :key="key" class="flex justify-between text-sm py-1">
-              <span class="text-slate-500">{{ key }}:</span>
+              <span class="text-slate-500">{{ key === 'accountId' ? 'Code Sự kiện' : key }}:</span>
               <span class="font-medium text-slate-800 font-mono">{{ val }}</span>
             </div>
             <div v-if="orderDraft.customerNote" class="flex justify-between text-sm py-1">

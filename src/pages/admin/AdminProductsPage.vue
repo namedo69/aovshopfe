@@ -221,7 +221,7 @@ const form = ref<UpsertProductDTO>({
   salePriceAmount: 90000,
   isActive: true,
   inputSchema: {
-    accountId: { label: 'Tài khoản / ID nhận', type: 'text', required: true }
+    accountId: { label: 'Code Sự kiện', type: 'text', required: true }
   }
 })
 
@@ -271,7 +271,7 @@ const openCreateModal = () => {
     salePriceAmount: 90000,
     isActive: true,
     inputSchema: {
-      accountId: { label: 'Tài khoản / ID nhận', type: 'text', required: true }
+      accountId: { label: 'Code Sự kiện', type: 'text', required: true }
     }
   }
   isModalOpen.value = true

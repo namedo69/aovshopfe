@@ -18,29 +18,47 @@ export function mapBackendProduct(raw: BackendProduct | Product): Product {
   const originalPrice = b.priceAmount ?? price
 
   // Chuẩn hoá inputSchema nếu BE trả về object key-value
-  let inputSchemaList = []
+  let inputSchemaList: any[] = []
   if (Array.isArray(b.inputSchema)) {
-    inputSchemaList = b.inputSchema
+    inputSchemaList = b.inputSchema.map((item: any) => ({
+      ...item,
+      label: item.name === 'accountId' || item.label?.includes('Tài khoản') ? 'Code Sự kiện' : item.label,
+      placeholder: item.name === 'accountId' ? 'Dán mã code sự kiện tại đây' : item.placeholder,
+    }))
   } else if (b.inputSchema && typeof b.inputSchema === 'object') {
     inputSchemaList = Object.entries(b.inputSchema).map(([key, val]: [string, any]) => {
       if (typeof val === 'object' && val !== null) {
         return {
           name: key,
-          label: val.label || key,
+          label: key === 'accountId' || val.label?.includes('Tài khoản') ? 'Code Sự kiện' : (val.label || key),
           type: val.type || 'text',
           required: val.required ?? true,
-          placeholder: val.placeholder || '',
+          placeholder: key === 'accountId' ? 'Dán mã code sự kiện tại đây' : (val.placeholder || ''),
           options: val.options || [],
           helpText: val.helpText || '',
         }
       }
       return {
         name: key,
-        label: key,
+        label: key === 'accountId' ? 'Code Sự kiện' : key,
         type: 'text',
+        placeholder: key === 'accountId' ? 'Dán mã code sự kiện tại đây' : '',
         required: true,
       }
     })
+  }
+
+  // Mặc định luôn có trường Code Sự kiện nếu sản phẩm chưa có schema
+  if (inputSchemaList.length === 0) {
+    inputSchemaList = [
+      {
+        name: 'accountId',
+        label: 'Code Sự kiện',
+        type: 'text',
+        required: true,
+        placeholder: 'Dán mã code sự kiện tại đây',
+      },
+    ]
   }
 
   return {

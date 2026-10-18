@@ -106,8 +106,8 @@
             <span class="font-medium text-slate-800">{{ formatVND(item.price) }}</span>
           </div>
           <div v-for="(val, key) in item.inputs" :key="key" class="flex justify-between py-1 border-b border-slate-50">
-            <span class="text-slate-400">{{ key }}</span>
-            <span class="font-mono font-medium text-slate-800">{{ val }}</span>
+            <span class="text-slate-400">{{ key === 'accountId' ? 'Code Sự kiện' : key }}</span>
+            <span class="font-mono font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded">{{ val }}</span>
           </div>
         </div>
 

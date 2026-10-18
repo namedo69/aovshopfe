@@ -80,7 +80,8 @@
         <thead class="bg-slate-50 text-slate-500 text-xs border-b border-slate-100">
           <tr>
             <th class="py-3.5 px-6 font-semibold">Mã Đơn</th>
-            <th class="py-3.5 px-6 font-semibold">Khách Hàng (User ID)</th>
+            <th class="py-3.5 px-6 font-semibold">Gói Dịch Vụ</th>
+            <th class="py-3.5 px-6 font-semibold">Code Sự Kiện</th>
             <th class="py-3.5 px-6 font-semibold">Thanh Toán</th>
             <th class="py-3.5 px-6 font-semibold">Thời Gian</th>
             <th class="py-3.5 px-6 font-semibold">Trạng Thái</th>
@@ -92,8 +93,23 @@
             <td class="py-4 px-6 font-mono font-medium text-slate-900">
               {{ order.orderCode }}
             </td>
-            <td class="py-4 px-6 font-mono text-xs text-slate-500 truncate max-w-xs">
-              {{ order.id }}
+            <td class="py-4 px-6 text-xs font-semibold text-slate-800">
+              {{ order.items[0]?.productName || 'Gói Dịch Vụ' }}
+            </td>
+            <td class="py-4 px-6">
+              <div v-if="getEventCode(order)" class="flex items-center gap-1.5">
+                <span class="font-mono text-xs font-bold text-sky-800 bg-sky-50 border border-sky-200 px-2.5 py-1 rounded-lg select-all">
+                  {{ getEventCode(order) }}
+                </span>
+                <button
+                  @click="copyCode(getEventCode(order))"
+                  title="Sao chép Code"
+                  class="p-1 text-slate-400 hover:text-sky-600 rounded transition cursor-pointer"
+                >
+                  <Copy class="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <span v-else class="text-xs text-slate-400 italic">Không có code</span>
             </td>
             <td class="py-4 px-6 font-bold text-sky-600">
               {{ formatVND(order.finalAmount) }}
@@ -217,8 +233,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { formatVND, formatDate } from '@/utils/format'
-import { ShoppingCart, RotateCcw, Loader2, Search } from 'lucide-vue-next'
+import { formatVND, formatDate, copyToClipboard } from '@/utils/format'
+import { ShoppingCart, RotateCcw, Loader2, Search, Copy } from 'lucide-vue-next'
 import { adminService } from '@/services/admin.service'
 import type { Order, OrderStatus } from '@/types'
 
@@ -287,6 +303,27 @@ const filteredOrders = computed(() => {
     return true
   })
 })
+
+const getEventCode = (order: Order): string => {
+  if (!order.items || order.items.length === 0) return ''
+  for (const item of order.items) {
+    if (item.inputs) {
+      if (item.inputs.accountId) return String(item.inputs.accountId)
+      if (item.inputs.code) return String(item.inputs.code)
+      if (item.inputs.eventCode) return String(item.inputs.eventCode)
+      // Nếu có bất kỳ input nào đầu tiên
+      const firstVal = Object.values(item.inputs)[0]
+      if (firstVal) return String(firstVal)
+    }
+  }
+  return ''
+}
+
+const copyCode = async (codeStr: string) => {
+  if (!codeStr) return
+  await copyToClipboard(codeStr)
+  showAlert(`Đã sao chép Code Sự Kiện: ${codeStr}`)
+}
 
 const showAlert = (msg: string, type: 'success' | 'error' = 'success') => {
   alertMessage.value = msg
