@@ -34,7 +34,7 @@
                 Danh Sách Code Sự Kiện ({{ codeList.length }} đơn lẻ)
               </h4>
               <span class="text-[11px] text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded">
-                Tự động tách {{ codeList.length }} đơn
+                Nhập siêu tốc 1 lần {{ codeList.length }} đơn
               </span>
             </div>
 
@@ -116,10 +116,10 @@
             v-if="authStore.userBalance >= finalPrice"
             @click="submitOrder"
             :disabled="isSubmitting"
-            class="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-sm shadow-md shadow-sky-500/20 transition hover:shadow-lg disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+            class="w-full py-3.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-sm shadow-md shadow-sky-500/20 transition hover:shadow-lg disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
           >
             <Loader2 v-if="isSubmitting" class="w-4 h-4 animate-spin" />
-            <span>{{ isSubmitting ? `Đang tạo ${codeList.length} đơn...` : `Thanh Toán (${codeList.length} Đơn)` }}</span>
+            <span>{{ isSubmitting ? 'Đang tạo đơn vào hệ thống...' : `Thanh Toán (${codeList.length} Đơn)` }}</span>
           </button>
 
           <router-link
@@ -139,6 +139,43 @@
       <router-link to="/products" class="mt-4 inline-block px-5 py-2 rounded-xl bg-sky-600 text-white font-medium text-sm">
         Xem danh sách gói
       </router-link>
+    </div>
+
+    <!-- Popup Toàn Màn Hình Hiển Thị Tiến Độ Tạo Đơn Siêu Tốc -->
+    <div
+      v-if="isSubmitting"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+    >
+      <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-sky-100 text-center space-y-5 animate-in zoom-in-95 duration-150">
+        <div class="w-16 h-16 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center mx-auto shadow-inner">
+          <Loader2 class="w-8 h-8 animate-spin" />
+        </div>
+
+        <div>
+          <h3 class="text-lg font-bold text-slate-800">Đang Khởi Tạo Đơn Hàng...</h3>
+          <p class="text-xs text-slate-500 mt-1">
+            Đang xử lý trừ ví và import cùng lúc <strong>{{ codeList.length }}</strong> đơn hàng vào Database
+          </p>
+        </div>
+
+        <!-- Progress bar chạy 100% -->
+        <div class="space-y-1.5">
+          <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+            <div
+              class="h-full bg-gradient-to-r from-sky-500 to-blue-600 rounded-full transition-all duration-300"
+              :style="{ width: progressPercent + '%' }"
+            ></div>
+          </div>
+          <div class="flex justify-between text-[11px] text-slate-400">
+            <span>Tiến trình</span>
+            <span class="font-bold text-sky-600">{{ progressPercent }}%</span>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-slate-400 italic">
+          Vui lòng không tắt trình duyệt trong giây lát...
+        </p>
+      </div>
     </div>
   </div>
 </template>
@@ -162,9 +199,9 @@ const isValidatingVoucher = ref(false)
 const isVoucherValid = ref(false)
 const voucherMessage = ref('')
 const isSubmitting = ref(false)
+const progressPercent = ref(0)
 
 onMounted(async () => {
-  // Lấy lại số dư mới nhất từ BE khi vào trang checkout
   try {
     const w = await walletService.getWallet()
     if (w && typeof w.balance === 'number') {
@@ -182,7 +219,7 @@ onMounted(async () => {
   }
 })
 
-// Danh sách code (hỗ trợ cả dạng mảng codes mới và dạng cũ 1 code)
+// Danh sách code
 const codeList = computed<string[]>(() => {
   if (!orderDraft.value) return []
   if (Array.isArray(orderDraft.value.codes) && orderDraft.value.codes.length > 0) {
@@ -212,7 +249,7 @@ const applyVoucher = async () => {
     const res = await orderService.validateVoucher({
       code: voucherCode.value.trim().toUpperCase(),
       productId: orderDraft.value.product.id,
-      quantity: codeList.value.length, // Tính giảm giá trên tổng số lượng code
+      quantity: codeList.value.length,
     })
 
     if (res.valid && res.discountAmount > 0) {
@@ -237,14 +274,21 @@ const applyVoucher = async () => {
 const submitOrder = async () => {
   if (isSubmitting.value) return
   isSubmitting.value = true
+  progressPercent.value = 15
 
   const codesToOrder = codeList.value
   const masterKey = generateIdempotencyKey()
 
+  // Giả lập thanh tiến trình trực quan
+  const interval = setInterval(() => {
+    if (progressPercent.value < 85) {
+      progressPercent.value += 15
+    }
+  }, 120)
+
   try {
     if (codesToOrder.length > 1) {
-      // Gửi toàn bộ danh sách codes kèm voucher lên Backend 1 lần duy nhất
-      // Backend sẽ tính giảm giá trên tổng tiền và tự động tách thành N đơn lẻ
+      // Import thẳng cùng lúc 1 lần toàn bộ codes vào DB (splitOrders = true)
       await orderService.createMultiOrders({
         productId: orderDraft.value.product.id,
         codes: codesToOrder,
@@ -252,7 +296,6 @@ const submitOrder = async () => {
         customerNote: orderDraft.value.customerNote,
       }, masterKey)
     } else {
-      // Đơn 1 code thông thường
       await orderService.createOrder({
         productId: orderDraft.value.product.id,
         inputs: {
@@ -264,7 +307,10 @@ const submitOrder = async () => {
       }, masterKey)
     }
 
-    // Lấy lại số dư ví thực từ backend sau khi thanh toán thành công
+    progressPercent.value = 100
+    clearInterval(interval)
+
+    // Đồng bộ lại ví
     try {
       const w = await walletService.getWallet()
       authStore.updateBalance(w.balance)
@@ -274,14 +320,18 @@ const submitOrder = async () => {
 
     sessionStorage.removeItem('checkout_draft')
 
-    // Chuyển hướng sang trang danh sách đơn hàng để khách thấy tất cả các đơn vừa tạo
-    router.push('/orders')
+    // Chờ 300ms cho mượt rồi điều hướng sang trang đơn hàng
+    setTimeout(() => {
+      isSubmitting.value = false
+      router.push('/orders')
+    }, 300)
   } catch (apiErr: any) {
+    clearInterval(interval)
+    isSubmitting.value = false
+    progressPercent.value = 0
     const errObj = apiErr.response?.data?.error
     const msg = errObj?.message || apiErr.message || 'Có lỗi xảy ra khi tạo đơn hàng'
     alert(msg)
-  } finally {
-    isSubmitting.value = false
   }
 }
 </script>
