@@ -26,6 +26,16 @@
           <router-link v-if="authStore.isAuthenticated" to="/orders" class="text-slate-600 hover:text-sky-600 font-medium transition-colors" active-class="text-sky-600 font-semibold">
             Đơn hàng
           </router-link>
+          <!-- Nhóm Zalo Hỗ Trợ -->
+          <a
+            href="https://zalo.me/g/bvktim491"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-sky-600 hover:text-sky-700 font-medium transition-colors flex items-center gap-1.5 bg-sky-50/70 hover:bg-sky-100/70 px-3 py-1.5 rounded-full border border-sky-200/60 text-xs"
+          >
+            <MessageCircle class="w-4 h-4 text-sky-500" />
+            <span>Nhóm Zalo Hỗ Trợ</span>
+          </a>
           <router-link v-if="authStore.isAdmin" to="/admin" class="text-sky-600 bg-sky-50 hover:bg-sky-100 px-3 py-1.5 rounded-lg font-medium transition-colors border border-sky-200 flex items-center gap-1.5">
             <ShieldCheck class="w-4 h-4" />
             Quản trị Admin
@@ -51,7 +61,7 @@
             <div class="relative" ref="userMenuRef">
               <button
                 @click="isUserMenuOpen = !isUserMenuOpen"
-                class="flex items-center gap-2 text-slate-700 p-1 rounded-full hover:bg-sky-50 transition border border-transparent hover:border-sky-200"
+                class="flex items-center gap-2 text-slate-700 p-1 rounded-full hover:bg-sky-50 transition border border-transparent hover:border-sky-200 cursor-pointer"
               >
                 <div class="w-8 h-8 rounded-full bg-sky-100 text-sky-700 font-bold flex items-center justify-center border border-sky-300 shadow-xs">
                   {{ userInitial }}
@@ -60,7 +70,7 @@
               <!-- Dropdown menu -->
               <div
                 v-show="isUserMenuOpen"
-                class="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-sky-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-100"
+                class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-sky-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-100"
               >
                 <div class="px-4 py-2 border-b border-slate-100 text-xs text-slate-500">
                   Xin chào, <strong class="text-slate-800 block truncate">{{ authStore.user?.email }}</strong>
@@ -79,6 +89,15 @@
                 >
                   <Package class="w-4 h-4 text-sky-500" /> Đơn hàng của tôi
                 </router-link>
+                <a
+                  href="https://zalo.me/g/bvktim491"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  @click="isUserMenuOpen = false"
+                  class="flex items-center gap-2.5 px-4 py-2 text-sm text-sky-600 hover:bg-sky-50 transition font-medium"
+                >
+                  <MessageCircle class="w-4 h-4 text-sky-500" /> Nhóm Zalo Hỗ Trợ
+                </a>
                 <router-link
                   v-if="authStore.isAdmin"
                   to="/admin"
@@ -99,6 +118,15 @@
           </template>
 
           <template v-else>
+            <a
+              href="https://zalo.me/g/bvktim491"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hidden sm:flex items-center gap-1.5 text-xs text-sky-600 hover:text-sky-700 font-medium bg-sky-50 px-3 py-1.5 rounded-full border border-sky-200"
+            >
+              <MessageCircle class="w-3.5 h-3.5 text-sky-500" />
+              <span>Nhóm Zalo</span>
+            </a>
             <router-link to="/login" class="text-slate-600 hover:text-sky-600 font-medium text-sm px-3 py-1.5">
               Đăng nhập
             </router-link>
@@ -128,6 +156,17 @@
           <p class="text-slate-500 max-w-sm text-sm leading-relaxed">
             Hệ thống cung cấp dịch vụ và tài khoản game uy tín, tự động hoá nạp tiền qua VietQR nhanh chóng 24/7.
           </p>
+          <!-- Thông tin Hotline / Zalo trực tiếp -->
+          <div class="pt-2 space-y-1.5 text-xs text-slate-600">
+            <div class="flex items-center gap-2">
+              <Phone class="w-4 h-4 text-sky-600" />
+              <span>Hotline / Zalo: <a href="https://zalo.me/0394897055" target="_blank" rel="noopener noreferrer" class="font-bold text-slate-800 hover:text-sky-600 font-mono text-sm">0394897055</a></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <Users class="w-4 h-4 text-sky-600" />
+              <span>Cộng đồng: <a href="https://zalo.me/g/bvktim491" target="_blank" rel="noopener noreferrer" class="text-sky-600 font-semibold hover:underline">Tham gia Nhóm Zalo Hỗ Trợ</a></span>
+            </div>
+          </div>
         </div>
 
         <div>
@@ -140,11 +179,20 @@
         </div>
 
         <div>
-          <h4 class="font-semibold text-slate-800 mb-3">Hỗ trợ</h4>
-          <ul class="space-y-2">
+          <h4 class="font-semibold text-slate-800 mb-3">Hỗ trợ & Liên hệ</h4>
+          <ul class="space-y-2.5">
+            <li>
+              <a href="https://zalo.me/g/bvktim491" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-sky-600 hover:text-sky-700 font-medium">
+                <MessageCircle class="w-3.5 h-3.5" /> Nhóm Zalo hỗ trợ khách
+              </a>
+            </li>
+            <li>
+              <a href="https://zalo.me/0394897055" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-slate-600 hover:text-sky-600">
+                <Phone class="w-3.5 h-3.5 text-emerald-500" /> Zalo Admin: 0394897055
+              </a>
+            </li>
             <li><a href="#" class="hover:text-sky-600 transition">Điều khoản sử dụng</a></li>
             <li><a href="#" class="hover:text-sky-600 transition">Chính sách hoàn tiền</a></li>
-            <li><a href="#" class="hover:text-sky-600 transition">Liên hệ CSKH</a></li>
           </ul>
         </div>
       </div>
@@ -157,6 +205,23 @@
         </div>
       </div>
     </footer>
+
+    <!-- Nút Floating Zalo Chat góc phải màn hình -->
+    <a
+      href="https://zalo.me/g/bvktim491"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Tham gia Nhóm Zalo Hỗ Trợ"
+      class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-gradient-to-r from-sky-500 to-blue-600 text-white px-4 py-2.5 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all group"
+    >
+      <div class="w-7 h-7 rounded-full bg-white text-sky-600 flex items-center justify-center font-bold shadow-xs">
+        <MessageCircle class="w-4 h-4 fill-sky-600" />
+      </div>
+      <div class="text-left hidden sm:block pr-1">
+        <div class="text-[10px] text-sky-100 leading-none">Hỗ trợ 24/7</div>
+        <div class="text-xs font-bold leading-tight">Nhóm Zalo Hỗ Trợ</div>
+      </div>
+    </a>
   </div>
 </template>
 
@@ -165,7 +230,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { formatVND } from '@/utils/format'
-import { Sparkles, Wallet, PlusCircle, ShieldCheck, Package, LogOut } from 'lucide-vue-next'
+import { Sparkles, Wallet, PlusCircle, ShieldCheck, Package, LogOut, MessageCircle, Phone, Users } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const router = useRouter()
