@@ -6,7 +6,28 @@
       </router-link>
     </div>
 
-    <div v-if="product" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <!-- Loading Skeleton khi đang chuyển trang / tải dữ liệu gói -->
+    <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-3 gap-8 animate-pulse">
+      <div class="md:col-span-1 space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+          <div class="h-4 bg-slate-200 rounded w-20"></div>
+          <div class="h-6 bg-slate-200 rounded w-3/4"></div>
+          <div class="h-8 bg-slate-200 rounded w-1/2"></div>
+          <div class="h-16 bg-slate-100 rounded w-full"></div>
+        </div>
+      </div>
+      <div class="md:col-span-2">
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+          <div class="h-6 bg-slate-200 rounded w-1/3"></div>
+          <div class="h-10 bg-slate-100 rounded w-full"></div>
+          <div class="h-10 bg-slate-100 rounded w-full"></div>
+          <div class="h-12 bg-slate-200 rounded w-full mt-6"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chi tiết gói khi đã nạp xong -->
+    <div v-else-if="product" class="grid grid-cols-1 md:grid-cols-3 gap-8">
       <!-- Info Left -->
       <div class="md:col-span-1 space-y-4">
         <div class="bg-white rounded-2xl border border-sky-100 p-6 shadow-xs">
@@ -123,6 +144,16 @@
         </div>
       </div>
     </div>
+
+    <!-- Thông báo lỗi khi không tìm thấy gói thật sự -->
+    <div v-else class="text-center py-16 bg-white rounded-2xl border border-slate-200">
+      <PackageSearch class="w-12 h-12 text-slate-300 mx-auto mb-3" />
+      <h3 class="text-base font-semibold text-slate-700">Không tìm thấy gói dịch vụ</h3>
+      <p class="text-sm text-slate-400 mt-1">Gói này có thể đã ngừng hoạt động hoặc đường dẫn không đúng</p>
+      <router-link to="/products" class="mt-4 inline-block px-5 py-2 rounded-xl bg-sky-600 text-white font-medium text-sm">
+        Xem danh sách gói
+      </router-link>
+    </div>
   </div>
 </template>
 
@@ -130,7 +161,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { formatVND } from '@/utils/format'
-import { ArrowLeft, ShieldCheck, Plus, Trash2 } from 'lucide-vue-next'
+import { ArrowLeft, ShieldCheck, Plus, Trash2, PackageSearch } from 'lucide-vue-next'
 import { productService } from '@/services/product.service'
 import type { Product } from '@/types'
 
@@ -138,6 +169,8 @@ const route = useRoute()
 const router = useRouter()
 
 const product = ref<Product | null>(null)
+const isLoading = ref(true)
+
 // Mảng lưu danh sách code, mặc định có 1 ô
 const eventCodes = ref<string[]>([''])
 const customerNote = ref('')
@@ -149,29 +182,16 @@ const totalPrice = computed(() => {
 
 onMounted(async () => {
   const slug = route.params.slug as string
+  isLoading.value = true
   try {
     const data = await productService.getProductBySlug(slug)
     if (data) {
       product.value = data
-      return
     }
   } catch (err) {
-    console.warn('Cannot load product from API, using fallback data:', err)
-  }
-
-  // Fallback ban đầu
-  product.value = {
-    id: '1',
-    name: 'Gói Dịch Vụ',
-    slug,
-    category: 'Gói Phổ Biến',
-    description: 'Xử lý tự động nhanh chóng.',
-    originalPrice: 120000,
-    price: 99000,
-    status: 'active',
-    inputSchema: [
-      { name: 'accountId', label: 'Code Sự kiện', type: 'text', required: true, placeholder: 'Dán mã code sự kiện tại đây' }
-    ]
+    console.warn('Cannot load product from API:', err)
+  } finally {
+    isLoading.value = false
   }
 })
 
@@ -190,7 +210,6 @@ const removeCodeField = (index: number) => {
 }
 
 const proceedToCheckout = () => {
-  // Lọc lấy các code đã nhập hợp lệ
   const validCodes = eventCodes.value.map(c => c.trim()).filter(Boolean)
   if (validCodes.length === 0) {
     alert('Vui lòng nhập ít nhất một Code Sự kiện!')
@@ -202,7 +221,6 @@ const proceedToCheckout = () => {
     return
   }
 
-  // Lưu giỏ hàng tạm thời với danh sách codes
   sessionStorage.setItem('checkout_draft', JSON.stringify({
     product: product.value,
     codes: validCodes,

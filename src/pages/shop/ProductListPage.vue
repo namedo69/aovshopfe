@@ -20,8 +20,18 @@
       </div>
     </div>
 
+    <!-- Loading Skeleton lúc chuyển tiếp -->
+    <div v-if="isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div v-for="n in 6" :key="n" class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 animate-pulse">
+        <div class="h-4 bg-slate-200 rounded w-20"></div>
+        <div class="h-6 bg-slate-200 rounded w-3/4"></div>
+        <div class="h-14 bg-slate-100 rounded w-full"></div>
+        <div class="h-8 bg-slate-200 rounded w-1/2 pt-4"></div>
+      </div>
+    </div>
+
     <!-- Product Grid -->
-    <div v-if="filteredProducts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div v-else-if="filteredProducts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <div
         v-for="product in filteredProducts"
         :key="product.id"
@@ -56,7 +66,7 @@
       </div>
     </div>
 
-    <!-- Empty state -->
+    <!-- Empty state thật sự khi đã load xong nhưng không có dữ liệu -->
     <div v-else class="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-200">
       <PackageSearch class="w-12 h-12 text-slate-300 mx-auto mb-3" />
       <h3 class="text-base font-semibold text-slate-700">Không tìm thấy gói phù hợp</h3>
@@ -66,16 +76,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { formatVND } from '@/utils/format'
 import { Search, PackageSearch } from 'lucide-vue-next'
 import { productService } from '@/services/product.service'
 import type { Product } from '@/types'
 
 const searchQuery = ref('')
-
 const products = ref<Product[]>([])
-const isLoading = ref(false)
+const isLoading = ref(true)
 
 const loadProducts = async () => {
   isLoading.value = true
@@ -83,28 +92,15 @@ const loadProducts = async () => {
     const data = await productService.getProducts()
     products.value = data
   } catch (err) {
-    console.warn('API error, falling back to initial catalog:', err)
-    products.value = [
-      {
-        id: '1',
-        name: 'CSUC Gói Cơ Bản 100K',
-        slug: 'csuc-co-ban',
-        category: 'Gói Cơ Bản',
-        description: 'Thích hợp cho nhu cầu trải nghiệm ngắn hạn, xử lý siêu tốc.',
-        originalPrice: 120000,
-        price: 99000,
-        status: 'active',
-        inputSchema: [
-          { name: 'accountId', label: 'Tài khoản / ID nhận quà', type: 'text', required: true, placeholder: 'Nhập ID game' },
-        ]
-      }
-    ]
+    console.warn('API error loading products:', err)
   } finally {
     isLoading.value = false
   }
 }
 
-loadProducts()
+onMounted(() => {
+  loadProducts()
+})
 
 const filteredProducts = computed(() => {
   return products.value.filter((p: Product) =>
