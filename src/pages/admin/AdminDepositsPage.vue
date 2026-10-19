@@ -118,7 +118,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 text-slate-700">
-          <tr v-for="dep in filteredDeposits" :key="dep.id" class="hover:bg-slate-50/50 transition">
+          <tr v-for="dep in paginatedDeposits" :key="dep.id" class="hover:bg-slate-50/50 transition">
             <td class="py-4 px-6 font-mono font-bold text-sky-700">
               {{ dep.paymentCode || dep.orderCode }}
             </td>
@@ -155,6 +155,14 @@
           </tr>
         </tbody>
       </table>
+
+      <!-- Thanh Phân Trang Nạp Tiền -->
+      <AdminPagination
+        v-if="filteredDeposits.length > 0"
+        v-model:currentPage="currentPage"
+        v-model:pageSize="pageSize"
+        :totalItems="filteredDeposits.length"
+      />
     </div>
 
     <!-- Modal Cấu hình Tài khoản Ngân hàng -->
@@ -274,6 +282,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { formatVND, formatDate } from '@/utils/format'
 import { Banknote, RotateCcw, Loader2, Building2, Search } from 'lucide-vue-next'
+import AdminPagination from '@/components/common/AdminPagination.vue'
 import { adminService } from '@/services/admin.service'
 
 const depositsList = ref<any[]>([])
@@ -282,6 +291,10 @@ const isLoading = ref(false)
 const isSubmitting = ref(false)
 const alertMessage = ref('')
 const alertType = ref<'success' | 'error'>('success')
+
+// Pagination
+const currentPage = ref(1)
+const pageSize = ref(20)
 
 // Filter & Search
 const depositSearchQuery = ref('')
@@ -311,6 +324,11 @@ const filteredDeposits = computed(() => {
 
     return true
   })
+})
+
+const paginatedDeposits = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredDeposits.value.slice(start, start + pageSize.value)
 })
 
 // Modal state

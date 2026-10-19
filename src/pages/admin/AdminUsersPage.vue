@@ -85,7 +85,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 text-slate-700">
-          <tr v-for="user in filteredUsers" :key="user.id" class="hover:bg-slate-50/50 transition">
+          <tr v-for="user in paginatedUsers" :key="user.id" class="hover:bg-slate-50/50 transition">
             <td class="py-4 px-6">
               <div class="font-medium text-slate-900">{{ user.name || 'Chưa đặt tên' }}</div>
               <div class="text-xs text-slate-400 font-mono">{{ user.email }}</div>
@@ -161,6 +161,14 @@
           </tr>
         </tbody>
       </table>
+
+      <!-- Thanh Phân Trang Người Dùng -->
+      <AdminPagination
+        v-if="filteredUsers.length > 0"
+        v-model:currentPage="currentPage"
+        v-model:pageSize="pageSize"
+        :totalItems="filteredUsers.length"
+      />
     </div>
 
     <!-- Modal Điều chỉnh số dư ví -->
@@ -267,6 +275,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { formatVND, formatDate } from '@/utils/format'
 import { Users, RotateCcw, Loader2, PlusCircle, Search } from 'lucide-vue-next'
+import AdminPagination from '@/components/common/AdminPagination.vue'
 import { adminService, type AdminUserListItem } from '@/services/admin.service'
 
 const usersList = ref<AdminUserListItem[]>([])
@@ -274,6 +283,10 @@ const isLoading = ref(false)
 const isSubmitting = ref(false)
 const alertMessage = ref('')
 const alertType = ref<'success' | 'error'>('success')
+
+// Pagination
+const currentPage = ref(1)
+const pageSize = ref(20)
 
 // Filter & Search
 const userSearchQuery = ref('')
@@ -305,6 +318,11 @@ const filteredUsers = computed(() => {
 
     return true
   })
+})
+
+const paginatedUsers = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredUsers.value.slice(start, start + pageSize.value)
 })
 
 // Modal State

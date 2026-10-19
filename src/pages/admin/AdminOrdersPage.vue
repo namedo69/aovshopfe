@@ -138,7 +138,7 @@
         </thead>
         <tbody class="divide-y divide-slate-100 text-slate-700">
           <tr
-            v-for="order in filteredOrders"
+            v-for="order in paginatedOrders"
             :key="order.id"
             :class="[
               'transition',
@@ -214,6 +214,14 @@
           </tr>
         </tbody>
       </table>
+
+      <!-- Thanh Phân Trang Đơn Hàng -->
+      <AdminPagination
+        v-if="filteredOrders.length > 0"
+        v-model:currentPage="currentPage"
+        v-model:pageSize="pageSize"
+        :totalItems="filteredOrders.length"
+      />
     </div>
 
     <!-- Modal Cập nhật trạng thái đơn lẻ -->
@@ -345,6 +353,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { formatVND, formatDate, copyToClipboard } from '@/utils/format'
 import { ShoppingCart, RotateCcw, Loader2, Search, Copy, CheckSquare, CheckCircle } from 'lucide-vue-next'
+import AdminPagination from '@/components/common/AdminPagination.vue'
 import { adminService } from '@/services/admin.service'
 import type { Order, OrderStatus } from '@/types'
 
@@ -353,6 +362,10 @@ const isLoading = ref(false)
 const isSubmitting = ref(false)
 const alertMessage = ref('')
 const alertType = ref<'success' | 'error'>('success')
+
+// Pagination
+const currentPage = ref(1)
+const pageSize = ref(20)
 
 // Selection (Checkbox hàng loạt)
 const selectedOrderIds = ref<string[]>([])
@@ -425,20 +438,25 @@ const filteredOrders = computed(() => {
   })
 })
 
-// Quản lý checkbox Select All
+const paginatedOrders = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredOrders.value.slice(start, start + pageSize.value)
+})
+
+// Quản lý checkbox Select All (theo trang hiện tại)
 const isAllSelected = computed(() => {
-  if (filteredOrders.value.length === 0) return false
-  return filteredOrders.value.every(o => selectedOrderIds.value.includes(o.id))
+  if (paginatedOrders.value.length === 0) return false
+  return paginatedOrders.value.every(o => selectedOrderIds.value.includes(o.id))
 })
 
 const toggleSelectAll = (e: Event) => {
   const checked = (e.target as HTMLInputElement).checked
   if (checked) {
-    const visibleIds = filteredOrders.value.map(o => o.id)
-    selectedOrderIds.value = Array.from(new Set([...selectedOrderIds.value, ...visibleIds]))
+    const pageIds = paginatedOrders.value.map(o => o.id)
+    selectedOrderIds.value = Array.from(new Set([...selectedOrderIds.value, ...pageIds]))
   } else {
-    const visibleIds = filteredOrders.value.map(o => o.id)
-    selectedOrderIds.value = selectedOrderIds.value.filter(id => !visibleIds.includes(id))
+    const pageIds = paginatedOrders.value.map(o => o.id)
+    selectedOrderIds.value = selectedOrderIds.value.filter(id => !pageIds.includes(id))
   }
 }
 
