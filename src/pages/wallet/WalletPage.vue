@@ -34,9 +34,31 @@
     <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
       <div class="p-6 border-b border-slate-100 flex items-center justify-between">
         <h2 class="text-lg font-bold text-slate-800">Lịch Sử Biến Động Số Dư</h2>
+        <button
+          @click="loadTransactions"
+          :disabled="isLoading"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+        >
+          <RotateCcw :class="['w-3.5 h-3.5', isLoading && 'animate-spin text-sky-600']" />
+          <span>Làm mới</span>
+        </button>
       </div>
 
-      <div class="overflow-x-auto">
+      <!-- Loading skeleton -->
+      <div v-if="isLoading" class="p-12 text-center text-slate-400">
+        <Loader2 class="w-8 h-8 animate-spin mx-auto mb-2 text-sky-500" />
+        <span>Đang tải lịch sử giao dịch...</span>
+      </div>
+
+      <!-- Empty state khi tài khoản mới tạo chưa có giao dịch -->
+      <div v-else-if="transactions.length === 0" class="p-12 text-center text-slate-400">
+        <Clock class="w-12 h-12 mx-auto mb-3 text-slate-300 stroke-[1.2]" />
+        <p class="font-medium text-slate-600">Chưa có biến động số dư nào</p>
+        <p class="text-xs text-slate-400 mt-1">Khi bạn nạp tiền hoặc thanh toán đơn hàng, lịch sử sẽ xuất hiện tại đây</p>
+      </div>
+
+      <!-- Table khi có giao dịch thật -->
+      <div v-else class="overflow-x-auto">
         <table class="w-full text-left text-sm">
           <thead class="bg-slate-50 text-slate-400 text-xs border-b border-slate-100">
             <tr>
@@ -90,47 +112,28 @@
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { formatVND, formatDate } from '@/utils/format'
-import { PlusCircle } from 'lucide-vue-next'
+import { PlusCircle, RotateCcw, Loader2, Clock } from 'lucide-vue-next'
 import { walletService, type WalletTransaction } from '@/services/wallet.service'
 
 const authStore = useAuthStore()
 const transactions = ref<WalletTransaction[]>([])
+const isLoading = ref(true)
 
-onMounted(async () => {
+const loadTransactions = async () => {
+  isLoading.value = true
   try {
+    // Luôn lấy dữ liệu thật 100% từ Database
     const list = await walletService.getTransactions()
-    if (list && list.length > 0) {
-      transactions.value = list
-      return
-    }
+    transactions.value = list
   } catch (err) {
     console.warn('API error fetching transactions:', err)
+    transactions.value = []
+  } finally {
+    isLoading.value = false
   }
+}
 
-  // Fallback ban đầu
-  transactions.value = [
-    {
-      id: 'tx_1',
-      type: 'deposit',
-      amount: 100000,
-      balanceBefore: 0,
-      balanceAfter: 100000,
-      referenceId: 'SEPAY819203',
-      description: 'Nạp tiền VietQR tự động',
-      status: 'completed',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: 'tx_2',
-      type: 'purchase',
-      amount: -99000,
-      balanceBefore: 100000,
-      balanceAfter: 1000,
-      referenceId: 'ORD882910',
-      description: 'Thanh toán đơn hàng',
-      status: 'completed',
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-    }
-  ]
+onMounted(() => {
+  loadTransactions()
 })
 </script>
