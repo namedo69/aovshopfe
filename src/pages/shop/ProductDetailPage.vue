@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
     <!-- Breadcrumb & Tiêu đề -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
@@ -12,7 +12,7 @@
       </div>
 
       <!-- Quick user wallet status -->
-      <div v-if="authStore.isAuthenticated" class="flex items-center gap-3 bg-white px-4 py-2.5 rounded-2xl border border-slate-200 shadow-xs">
+      <div v-if="authStore.isAuthenticated" class="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-xs">
         <div class="text-right">
           <div class="text-[11px] text-slate-400">Số dư ví khả dụng:</div>
           <div class="font-bold text-sky-600 text-sm">{{ formatVND(authStore.userBalance) }}</div>
@@ -33,21 +33,21 @@
         <span class="text-xs text-slate-400">{{ allProducts.length }} gói có sẵn</span>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
         <button
           v-for="p in allProducts"
           :key="p.id"
           type="button"
           @click="selectProduct(p)"
           :class="[
-            'p-3 rounded-xl border text-left transition relative cursor-pointer',
+            'p-2.5 rounded-xl border text-left transition relative cursor-pointer',
             currentProduct?.id === p.id
               ? 'border-sky-500 bg-sky-50/70 ring-2 ring-sky-500/20 shadow-xs'
               : 'border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50'
           ]"
         >
           <div class="flex items-center justify-between mb-1">
-            <span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+            <span class="text-[10px] font-semibold uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
               {{ p.category }}
             </span>
             <span v-if="currentProduct?.id === p.id" class="w-2 h-2 rounded-full bg-sky-600"></span>
@@ -76,18 +76,18 @@
       <button @click="alertMessage = ''" class="font-bold ml-4 text-slate-400 hover:text-slate-600">✕</button>
     </div>
 
-    <!-- 2. Khung Form Đặt Đơn Trực Tiếp (Không qua Checkout) -->
-    <div v-if="currentProduct" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Cột Trái & Giữa: Thông tin gói + Nhập danh sách code & số lượng + Voucher -->
-      <div class="lg:col-span-2 space-y-6">
+    <!-- MAIN TWO-COLUMN LAYOUT: THANH TOÁN SANG TRÁI - TIẾN ĐỘ & LỊCH SỬ SANG PHẢI -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- CỘT TRÁI: KHUNG ĐẶT ĐƠN & THANH TOÁN (5 / 12) -->
+      <div v-if="currentProduct" class="lg:col-span-6 xl:col-span-5 space-y-5">
         <!-- Thông tin chi tiết gói đang chọn -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-3">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
           <div class="flex items-start justify-between gap-4">
             <div>
-              <span class="text-xs font-bold px-2.5 py-1 rounded-md bg-sky-50 text-sky-700 border border-sky-100">
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-100">
                 {{ currentProduct.category }}
               </span>
-              <h2 class="text-xl font-bold text-slate-900 mt-2">{{ currentProduct.name }}</h2>
+              <h2 class="text-lg font-bold text-slate-900 mt-1.5">{{ currentProduct.name }}</h2>
             </div>
 
             <!-- Giá & Quyền lợi cấp bậc -->
@@ -95,22 +95,22 @@
               <div v-if="currentProduct.originalPrice > effectiveUnitPrice" class="text-xs text-slate-400 line-through">
                 {{ formatVND(currentProduct.originalPrice) }}
               </div>
-              <div class="text-2xl font-black text-sky-600">
+              <div class="text-xl font-black text-sky-600">
                 {{ formatVND(effectiveUnitPrice) }}
               </div>
-              <div class="text-[11px] text-slate-400">/ 1 Code</div>
+              <div class="text-[10px] text-slate-400">/ 1 Code</div>
 
               <!-- Badge phân cấp người dùng -->
               <div v-if="authStore.isAuthenticated" class="mt-1">
                 <span
                   v-if="authStore.isAdmin"
-                  class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-700 border border-purple-200"
+                  class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200"
                 >
                   👑 Admin: Giảm 100%
                 </span>
                 <span
                   v-else-if="authStore.userTierDiscount > 0"
-                  class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200"
+                  class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200"
                 >
                   ⭐ {{ authStore.userTierName }}: Giảm {{ authStore.userTierDiscount }}%
                 </span>
@@ -124,26 +124,26 @@
         </div>
 
         <!-- Nhập danh sách Code & Số Lượng Tương Ứng -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="text-base font-bold text-slate-900">Danh Sách Code Sự Kiện & Số Lượng</h3>
-              <p class="text-xs text-slate-400 mt-0.5">Nhập mã code và số lượng cần chạy tương ứng cho từng code</p>
+              <h3 class="text-sm font-bold text-slate-900">Danh Sách Code Sự Kiện & Số Lượng</h3>
+              <p class="text-[11px] text-slate-400 mt-0.5">Nhập mã code và ô số lượng tương ứng bên cạnh</p>
             </div>
-            <span :class="['text-xs font-semibold px-2.5 py-1 rounded-full', codeRows.length >= 10 ? 'bg-amber-100 text-amber-800' : 'bg-sky-100 text-sky-700']">
-              {{ codeRows.length }}/10 dòng code
+            <span :class="['text-xs font-semibold px-2 py-0.5 rounded-full', codeRows.length >= 10 ? 'bg-amber-100 text-amber-800' : 'bg-sky-100 text-sky-700']">
+              {{ codeRows.length }}/10 dòng
             </span>
           </div>
 
           <!-- Danh sách từng dòng: STT, Code Input, Số lượng Box, Nút Xóa -->
-          <div class="space-y-2.5">
+          <div class="space-y-2">
             <div
               v-for="(row, idx) in codeRows"
               :key="idx"
               class="flex items-center gap-2 p-2 rounded-xl bg-slate-50/70 border border-slate-200 focus-within:border-sky-500 focus-within:bg-white transition"
             >
               <!-- STT -->
-              <div class="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 font-bold text-xs flex items-center justify-center shrink-0">
+              <div class="w-6 h-6 rounded-lg bg-sky-100 text-sky-700 font-bold text-xs flex items-center justify-center shrink-0">
                 #{{ idx + 1 }}
               </div>
 
@@ -153,18 +153,18 @@
                 type="text"
                 required
                 :placeholder="`Nhập mã code sự kiện #${idx + 1}...`"
-                class="flex-1 px-3 py-1.5 text-sm bg-transparent outline-none font-mono font-medium text-slate-800"
+                class="flex-1 px-2.5 py-1 text-xs bg-transparent outline-none font-mono font-medium text-slate-800"
               />
 
               <!-- Ô Số lượng bên cạnh code -->
-              <div class="flex items-center gap-1.5 px-2 py-1 bg-white rounded-lg border border-slate-200 shrink-0">
-                <span class="text-[11px] font-semibold text-slate-400 uppercase">SL:</span>
+              <div class="flex items-center gap-1 px-2 py-1 bg-white rounded-lg border border-slate-200 shrink-0">
+                <span class="text-[10px] font-semibold text-slate-400 uppercase">SL:</span>
                 <input
                   v-model.number="row.quantity"
                   type="number"
                   min="1"
                   max="1000"
-                  class="w-14 text-center text-xs font-bold text-slate-800 outline-none"
+                  class="w-12 text-center text-xs font-bold text-slate-800 outline-none"
                 />
               </div>
 
@@ -173,52 +173,52 @@
                 v-if="codeRows.length > 1"
                 type="button"
                 @click="removeCodeRow(idx)"
-                class="p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition cursor-pointer"
+                class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition cursor-pointer"
                 title="Xóa dòng này"
               >
-                <Trash2 class="w-4 h-4" />
+                <Trash2 class="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
 
           <!-- Thêm dòng code mới -->
-          <div class="pt-2 flex items-center justify-between">
+          <div class="pt-1 flex items-center justify-between">
             <button
               v-if="codeRows.length < 10"
               type="button"
               @click="addCodeRow"
-              class="flex items-center gap-1.5 text-xs font-semibold text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 px-3.5 py-2 rounded-xl border border-sky-200 transition cursor-pointer"
+              class="flex items-center gap-1.5 text-xs font-semibold text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 px-3 py-1.5 rounded-xl border border-sky-200 transition cursor-pointer"
             >
-              <Plus class="w-4 h-4" /> Thêm Code & Số Lượng Khác
+              <Plus class="w-3.5 h-3.5" /> Thêm Code Khác
             </button>
-            <span v-else class="text-xs text-amber-600 font-medium">
-              ⚠️ Đã đạt giới hạn tối đa 10 code cho 1 lần thanh toán.
+            <span v-else class="text-[11px] text-amber-600 font-medium">
+              ⚠️ Tối đa 10 code / lần.
             </span>
 
             <span class="text-xs text-slate-500 font-medium">
-              Tổng số lượng: <strong class="text-slate-900 font-bold">{{ totalItemsQuantity }} cái</strong>
+              Tổng SL: <strong class="text-slate-900 font-bold">{{ totalItemsQuantity }} cái</strong>
             </span>
           </div>
 
           <!-- Ghi chú cho đơn hàng -->
-          <div class="pt-3 border-t border-slate-100">
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Ghi chú cho đơn hàng (tùy chọn)</label>
+          <div class="pt-2 border-t border-slate-100">
+            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Ghi chú cho đơn hàng (tùy chọn)</label>
             <textarea
               v-model="customerNote"
-              rows="2"
-              placeholder="Ghi chú thêm nếu cần thiết cho đối soát..."
-              class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-xs outline-none bg-slate-50/50"
+              rows="1"
+              placeholder="Ghi chú thêm nếu cần thiết..."
+              class="w-full px-3 py-1.5 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-xs outline-none bg-slate-50/50"
             ></textarea>
           </div>
         </div>
 
-        <!-- Thêm mã giảm giá (Voucher) TRỰC TIẾP TẠI MÀN HÌNH NÀY -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-3">
+        <!-- Thêm mã giảm giá (Voucher) -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
           <div class="flex items-center justify-between">
-            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-              <TicketPercent class="w-4 h-4 text-sky-600" /> Mã Giảm Giá (Voucher)
+            <h3 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <TicketPercent class="w-3.5 h-3.5 text-sky-600" /> Mã Giảm Giá (Voucher)
             </h3>
-            <span v-if="appliedVoucher" class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+            <span v-if="appliedVoucher" class="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
               Đã áp dụng
             </span>
           </div>
@@ -228,44 +228,42 @@
               v-model="voucherInput"
               type="text"
               :disabled="isValidatingVoucher || !!appliedVoucher"
-              placeholder="Nhập mã voucher giảm giá..."
-              class="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-xs uppercase outline-none font-mono disabled:bg-slate-100"
+              placeholder="Nhập mã voucher..."
+              class="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-xs uppercase outline-none font-mono disabled:bg-slate-100"
             />
             <button
               v-if="!appliedVoucher"
               type="button"
               @click="applyVoucher"
               :disabled="isValidatingVoucher || !voucherInput.trim()"
-              class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-semibold text-xs transition disabled:opacity-50 cursor-pointer flex items-center gap-1"
+              class="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-semibold text-xs transition disabled:opacity-50 cursor-pointer flex items-center gap-1"
             >
-              <Loader2 v-if="isValidatingVoucher" class="w-3.5 h-3.5 animate-spin" />
+              <Loader2 v-if="isValidatingVoucher" class="w-3 h-3 animate-spin" />
               <span>Áp Dụng</span>
             </button>
             <button
               v-else
               type="button"
               @click="removeVoucher"
-              class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl font-semibold text-xs transition cursor-pointer"
+              class="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl font-semibold text-xs transition cursor-pointer"
             >
               Hủy Mã
             </button>
           </div>
 
-          <p v-if="voucherMessage" :class="['text-xs', isVoucherValid ? 'text-emerald-600 font-medium' : 'text-rose-500']">
+          <p v-if="voucherMessage" :class="['text-[11px]', isVoucherValid ? 'text-emerald-600 font-medium' : 'text-rose-500']">
             {{ voucherMessage }}
           </p>
         </div>
-      </div>
 
-      <!-- Cột Phải: Tổng thanh toán & Nút Đặt Đơn Ngay (1-Click Order) -->
-      <div class="lg:col-span-1 space-y-6">
-        <div class="bg-white rounded-2xl border border-sky-100 p-6 shadow-xs space-y-5 sticky top-6">
-          <h3 class="text-base font-bold text-slate-800 pb-3 border-b border-slate-100">
+        <!-- Khối Chi Tiết Thanh Toán & Nút Đặt Đơn Ngay (1-Click Order) -->
+        <div class="bg-white rounded-2xl border border-sky-100 p-5 shadow-xs space-y-4">
+          <h3 class="text-sm font-bold text-slate-800 pb-2.5 border-b border-slate-100">
             Thanh Toán Đơn Hàng
           </h3>
 
           <!-- Chi tiết bảng giá -->
-          <div class="space-y-2.5 text-xs">
+          <div class="space-y-2 text-xs">
             <div class="flex justify-between text-slate-600">
               <span>Đơn giá theo cấp:</span>
               <span class="font-semibold text-slate-800">{{ formatVND(effectiveUnitPrice) }} / cái</span>
@@ -293,30 +291,30 @@
               <span>Miễn phí 100% (0đ)</span>
             </div>
 
-            <div class="pt-3 border-t border-slate-100 flex justify-between items-baseline font-bold text-sm text-slate-900">
-              <span>Tổng thanh toán:</span>
-              <span class="text-2xl font-black text-sky-600">{{ formatVND(finalPaymentAmount) }}</span>
+            <div class="pt-2.5 border-t border-slate-100 flex justify-between items-baseline font-bold text-xs text-slate-900">
+              <span class="text-sm">Tổng thanh toán:</span>
+              <span class="text-xl font-black text-sky-600">{{ formatVND(finalPaymentAmount) }}</span>
             </div>
           </div>
 
           <!-- Thông tin số dư ví -->
-          <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100 text-xs space-y-1.5">
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs space-y-1">
             <div class="flex justify-between text-slate-500">
               <span>Số dư ví hiện tại:</span>
               <span class="font-bold text-slate-800">{{ formatVND(authStore.userBalance) }}</span>
             </div>
 
-            <div v-if="authStore.isAuthenticated && authStore.userBalance < finalPaymentAmount && finalPaymentAmount > 0" class="text-rose-500 font-medium pt-1 flex items-center gap-1">
+            <div v-if="authStore.isAuthenticated && authStore.userBalance < finalPaymentAmount && finalPaymentAmount > 0" class="text-rose-500 font-medium pt-1 flex items-center gap-1 text-[11px]">
               <AlertCircle class="w-3.5 h-3.5 shrink-0" />
               <span>Số dư không đủ. Vui lòng nạp thêm.</span>
             </div>
           </div>
 
-          <!-- Nút Đặt Đơn Ngay (Không chuyển trang nữa) -->
+          <!-- Nút Đặt Đơn Ngay (Không chuyển sang Checkout nữa) -->
           <div v-if="!authStore.isAuthenticated">
             <router-link
               to="/login"
-              class="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-sm text-center block transition shadow-sm"
+              class="w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs text-center block transition shadow-sm"
             >
               Đăng Nhập Để Đặt Hàng
             </router-link>
@@ -325,7 +323,7 @@
           <div v-else-if="authStore.userBalance < finalPaymentAmount && finalPaymentAmount > 0">
             <router-link
               to="/deposit"
-              class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm text-center block transition shadow-md"
+              class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs text-center block transition shadow-md"
             >
               Nạp Thêm Vào Ví
             </router-link>
@@ -336,161 +334,145 @@
             type="button"
             @click="handleSubmitOrder"
             :disabled="isSubmitting || validCodeCount === 0"
-            class="w-full py-3.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm shadow-md shadow-sky-500/20 transition hover:shadow-lg disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+            class="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm shadow-md shadow-sky-500/20 transition hover:shadow-lg disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
           >
             <Loader2 v-if="isSubmitting" class="w-4 h-4 animate-spin" />
             <span>{{ isSubmitting ? 'Đang khởi tạo đơn...' : `Thanh Toán & Đặt ${validCodeCount} Đơn Ngay` }}</span>
           </button>
-
-          <p class="text-[11px] text-slate-400 text-center">
-            ⚡ Hệ thống tự động tạo đơn và đẩy sang server đối tác ngay lập tức.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- 3. BẢNG THEO DÕI TIẾN ĐỘ & LỊCH SỬ DONE NGAY TẠI MÀN ĐẶT ĐƠN NÀY -->
-    <div v-if="authStore.isAuthenticated" class="pt-6 border-t border-slate-200 space-y-4">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <span>📦</span> Theo Dõi Tiến Độ & Lịch Sử Đơn Hàng Của Bạn
-          </h2>
-          <p class="text-xs text-slate-400 mt-0.5">
-            Cập nhật trạng thái thời gian thực của các code sự kiện vừa đặt
-          </p>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <!-- Switch tab lọc -->
-          <div class="flex bg-slate-100 p-1 rounded-xl">
-            <button
-              v-for="tab in trackingTabs"
-              :key="tab.value"
-              @click="activeTrackingTab = tab.value"
-              :class="[
-                'px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer',
-                activeTrackingTab === tab.value ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-500 hover:text-slate-700'
-              ]"
-            >
-              {{ tab.label }}
-              <span
-                v-if="tab.count !== undefined"
-                :class="[
-                  'ml-1 px-1.5 py-0.2 rounded-full text-[10px]',
-                  activeTrackingTab === tab.value ? 'bg-sky-100 text-sky-700' : 'bg-slate-200 text-slate-600'
-                ]"
-              >
-                {{ tab.count }}
-              </span>
-            </button>
-          </div>
-
-          <!-- Nút Refresh Đơn -->
-          <button
-            @click="loadOrders"
-            :disabled="isLoadingOrders"
-            class="p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition cursor-pointer"
-            title="Làm mới tiến độ đơn hàng"
-          >
-            <RotateCcw :class="['w-4 h-4', isLoadingOrders && 'animate-spin text-sky-600']" />
-          </button>
         </div>
       </div>
 
-      <!-- Loading orders -->
-      <div v-if="isLoadingOrders && ordersList.length === 0" class="p-8 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
-        <Loader2 class="w-6 h-6 animate-spin mx-auto mb-2 text-sky-500" />
-        <span class="text-xs">Đang tải lịch sử đơn...</span>
-      </div>
+      <!-- CỘT PHẢI: TIẾN ĐỘ & LỊCH SỬ ĐƠN HÀNG (BỎ CỘT MÃ ĐƠN, THANH TOÁN, CHI TIẾT) (7 / 12) -->
+      <div class="lg:col-span-6 xl:col-span-7 space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-base font-bold text-slate-900 flex items-center gap-1.5">
+                <span>📦</span> Tiến Độ & Lịch Sử Đơn Hàng
+              </h2>
+              <p class="text-[11px] text-slate-400 mt-0.5">
+                Theo dõi tiến trình hoàn thành tự động thời gian thực
+              </p>
+            </div>
 
-      <!-- Empty state -->
-      <div v-else-if="filteredOrders.length === 0" class="p-10 text-center bg-white rounded-2xl border border-dashed border-slate-200 text-slate-400 space-y-2">
-        <PackageSearch class="w-10 h-10 mx-auto text-slate-300 stroke-[1.2]" />
-        <p class="text-sm font-medium text-slate-600">Không có đơn hàng nào trong mục này</p>
-        <p class="text-xs text-slate-400">Các đơn bạn vừa đặt sẽ hiển thị tiến độ trực tiếp tại đây</p>
-      </div>
-
-      <!-- Orders Table -->
-      <div v-else class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm">
-            <thead class="bg-slate-50 text-slate-500 text-xs border-b border-slate-100">
-              <tr>
-                <th class="py-3 px-5 font-semibold">Mã Đơn & Thời Gian</th>
-                <th class="py-3 px-5 font-semibold">Gói Dịch Vụ</th>
-                <th class="py-3 px-5 font-semibold">Code / Dữ Liệu Khách</th>
-                <th class="py-3 px-5 font-semibold">Số Lượng</th>
-                <th class="py-3 px-5 font-semibold">Thanh Toán</th>
-                <th class="py-3 px-5 font-semibold">Trạng Thái Tiến Độ</th>
-                <th class="py-3 px-5 font-semibold text-right">Chi Tiết</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 text-slate-700">
-              <tr v-for="ord in filteredOrders" :key="ord.id" class="hover:bg-slate-50/50 transition">
-                <td class="py-3.5 px-5">
-                  <div class="font-mono font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                    <span>{{ ord.orderCode }}</span>
-                    <button
-                      @click="copyText(ord.orderCode)"
-                      class="text-slate-400 hover:text-sky-600 transition"
-                      title="Copy mã đơn"
-                    >
-                      <Copy class="w-3 h-3" />
-                    </button>
-                  </div>
-                  <div class="text-[11px] text-slate-400 mt-0.5">{{ formatDate(ord.createdAt) }}</div>
-                </td>
-
-                <td class="py-3.5 px-5">
-                  <span class="font-medium text-xs text-slate-800">{{ ord.items?.[0]?.productName || 'Gói Dịch Vụ' }}</span>
-                </td>
-
-                <td class="py-3.5 px-5">
-                  <div class="flex items-center gap-1.5 font-mono text-xs font-bold text-sky-800">
-                    <span>{{ getOrderCodeInput(ord) }}</span>
-                    <button
-                      v-if="getOrderCodeInput(ord)"
-                      @click="copyText(getOrderCodeInput(ord))"
-                      class="text-slate-400 hover:text-sky-600 transition"
-                      title="Copy code"
-                    >
-                      <Copy class="w-3 h-3" />
-                    </button>
-                  </div>
-                </td>
-
-                <td class="py-3.5 px-5 text-xs font-bold text-slate-700">
-                  x{{ ord.items?.[0]?.quantity || 1 }}
-                </td>
-
-                <td class="py-3.5 px-5 font-bold text-xs text-slate-800">
-                  {{ formatVND(ord.finalAmount) }}
-                </td>
-
-                <td class="py-3.5 px-5">
+            <div class="flex items-center gap-2">
+              <!-- Switch tab lọc: Đang Chạy | Đã Done | Tất Cả -->
+              <div class="flex bg-slate-100 p-1 rounded-xl">
+                <button
+                  v-for="tab in trackingTabs"
+                  :key="tab.value"
+                  @click="activeTrackingTab = tab.value"
+                  :class="[
+                    'px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer',
+                    activeTrackingTab === tab.value ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-500 hover:text-slate-700'
+                  ]"
+                >
+                  {{ tab.label }}
                   <span
+                    v-if="tab.count !== undefined"
                     :class="[
-                      'px-2.5 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1.5',
-                      statusStyles[ord.status] || 'bg-slate-100 text-slate-600'
+                      'ml-1 px-1.5 py-0.2 rounded-full text-[10px]',
+                      activeTrackingTab === tab.value ? 'bg-sky-100 text-sky-700' : 'bg-slate-200 text-slate-600'
                     ]"
                   >
-                    <span :class="['w-1.5 h-1.5 rounded-full', statusDots[ord.status] || 'bg-slate-400']"></span>
-                    {{ statusLabels[ord.status] || ord.status }}
+                    {{ tab.count }}
                   </span>
-                </td>
+                </button>
+              </div>
 
-                <td class="py-3.5 px-5 text-right">
-                  <router-link
-                    :to="`/orders/${ord.orderCode}`"
-                    class="text-xs font-semibold text-sky-600 hover:text-sky-700 hover:underline transition"
-                  >
-                    Chi tiết →
-                  </router-link>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+              <!-- Nút Refresh Đơn -->
+              <button
+                @click="loadOrders"
+                :disabled="isLoadingOrders"
+                class="p-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                title="Làm mới tiến độ đơn hàng"
+              >
+                <RotateCcw :class="['w-3.5 h-3.5', isLoadingOrders && 'animate-spin text-sky-600']" />
+              </button>
+            </div>
+          </div>
+
+          <!-- Loading orders -->
+          <div v-if="isLoadingOrders && ordersList.length === 0" class="p-8 text-center text-slate-400">
+            <Loader2 class="w-6 h-6 animate-spin mx-auto mb-2 text-sky-500" />
+            <span class="text-xs">Đang tải lịch sử đơn...</span>
+          </div>
+
+          <!-- Chưa đăng nhập -->
+          <div v-else-if="!authStore.isAuthenticated" class="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-400 space-y-2">
+            <PackageSearch class="w-8 h-8 mx-auto text-slate-300 stroke-[1.2]" />
+            <p class="text-xs font-medium text-slate-600">Đăng nhập tài khoản để theo dõi tiến độ đơn hàng</p>
+            <router-link to="/login" class="inline-block px-3 py-1.5 bg-sky-600 text-white rounded-lg text-xs font-semibold">
+              Đăng nhập ngay
+            </router-link>
+          </div>
+
+          <!-- Empty state -->
+          <div v-else-if="filteredOrders.length === 0" class="p-8 text-center bg-slate-50/50 rounded-xl border border-dashed border-slate-200 text-slate-400 space-y-1.5">
+            <PackageSearch class="w-8 h-8 mx-auto text-slate-300 stroke-[1.2]" />
+            <p class="text-xs font-medium text-slate-600">Không có đơn hàng nào trong mục này</p>
+            <p class="text-[11px] text-slate-400">Đơn hàng bạn đặt bên trái sẽ hiển thị tiến độ trực tiếp tại đây</p>
+          </div>
+
+          <!-- BẢNG ĐÃ BỎ CỘT MÃ ĐƠN, THANH TOÁN, CHI TIẾT -->
+          <div v-else class="overflow-hidden rounded-xl border border-slate-100">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 text-[11px] border-b border-slate-100">
+                  <tr>
+                    <th class="py-2.5 px-4 font-semibold">Gói Dịch Vụ</th>
+                    <th class="py-2.5 px-4 font-semibold">Code Sự Kiện</th>
+                    <th class="py-2.5 px-4 font-semibold text-center">Số Lượng</th>
+                    <th class="py-2.5 px-4 font-semibold text-right">Trạng Thái Tiến Độ</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700">
+                  <tr v-for="ord in filteredOrders" :key="ord.id" class="hover:bg-slate-50/50 transition">
+                    <!-- Gói Dịch Vụ -->
+                    <td class="py-3 px-4">
+                      <div class="font-bold text-xs text-slate-900">{{ ord.items?.[0]?.productName || 'Gói Dịch Vụ' }}</div>
+                      <div class="text-[10px] text-slate-400 mt-0.5">{{ formatDate(ord.createdAt) }}</div>
+                    </td>
+
+                    <!-- Code Sự Kiện (với nút copy) -->
+                    <td class="py-3 px-4">
+                      <div class="flex items-center gap-1.5 font-mono text-xs font-bold text-sky-800">
+                        <span class="truncate max-w-[140px] sm:max-w-[200px]" :title="getOrderCodeInput(ord)">
+                          {{ getOrderCodeInput(ord) || '—' }}
+                        </span>
+                        <button
+                          v-if="getOrderCodeInput(ord)"
+                          @click="copyText(getOrderCodeInput(ord))"
+                          class="text-slate-400 hover:text-sky-600 transition shrink-0"
+                          title="Copy code"
+                        >
+                          <Copy class="w-3 h-3" />
+                        </button>
+                      </div>
+                    </td>
+
+                    <!-- Số Lượng -->
+                    <td class="py-3 px-4 text-center font-bold text-slate-800">
+                      x{{ ord.items?.[0]?.quantity || 1 }}
+                    </td>
+
+                    <!-- Trạng Thái Tiến Độ -->
+                    <td class="py-3 px-4 text-right">
+                      <span
+                        :class="[
+                          'px-2.5 py-1 rounded-full text-[11px] font-semibold inline-flex items-center gap-1.5',
+                          statusStyles[ord.status] || 'bg-slate-100 text-slate-600'
+                        ]"
+                      >
+                        <span :class="['w-1.5 h-1.5 rounded-full', statusDots[ord.status] || 'bg-slate-400']"></span>
+                        {{ statusLabels[ord.status] || ord.status }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -598,7 +580,7 @@ const statusLabels: Record<OrderStatus, string> = {
   queued: 'Chờ gửi',
   sending: 'Đang gửi đối tác',
   processing: 'Đang xử lý',
-  completed: 'Hoạt tất (Done)',
+  completed: 'Hoàn tất (Done)',
   failed: 'Thất bại',
   refunded: 'Đã hoàn tiền',
   cancelled: 'Đã hủy',
