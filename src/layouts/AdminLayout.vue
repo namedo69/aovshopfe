@@ -71,6 +71,15 @@
           <TicketPercent class="w-4 h-4" />
           Mã giảm giá
         </router-link>
+
+        <router-link
+          to="/admin/tiers"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white transition"
+          active-class="bg-sky-600 text-white hover:bg-sky-600"
+        >
+          <BadgePercent class="w-4 h-4" />
+          Loại User & Cấu hình giá
+        </router-link>
       </nav>
 
       <!-- Bottom User & Exit -->
@@ -119,6 +128,7 @@ import {
   ShoppingCart,
   Banknote,
   TicketPercent,
+  BadgePercent,
   ArrowLeft,
   LogOut,
 } from 'lucide-vue-next'

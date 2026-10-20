@@ -72,11 +72,19 @@
                 {{ v.isActive ? 'Đang bật' : 'Tạm tắt' }}
               </span>
             </td>
-            <td class="py-4 px-6 text-right">
+            <td class="py-4 px-6 text-right space-x-2">
+              <button
+                @click="openEditModal(v)"
+                class="px-2.5 py-1 text-xs font-semibold text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-lg transition cursor-pointer"
+              >
+                Sửa thông tin
+              </button>
               <button
                 @click="toggleVoucherStatus(v)"
-                class="text-xs font-medium hover:underline cursor-pointer"
-                :class="v.isActive ? 'text-rose-600' : 'text-emerald-600'"
+                :class="[
+                  'px-2.5 py-1 text-xs font-semibold rounded-lg transition cursor-pointer',
+                  v.isActive ? 'text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100' : 'text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
+                ]"
               >
                 {{ v.isActive ? 'Tắt mã' : 'Bật lại' }}
               </button>
@@ -86,15 +94,17 @@
       </table>
     </div>
 
-    <!-- Modal Tạo Voucher -->
+    <!-- Modal Tạo / Sửa Voucher -->
     <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
       <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
         <div class="p-6 border-b border-slate-100 flex items-center justify-between">
-          <h3 class="text-lg font-bold text-slate-800">Tạo Mã Giảm Giá Mới</h3>
+          <h3 class="text-lg font-bold text-slate-800">
+            {{ isEditing ? `Chỉnh Sửa Mã Giảm Giá "${editingVoucherCode}"` : 'Tạo Mã Giảm Giá Mới' }}
+          </h3>
           <button @click="isModalOpen = false" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
         </div>
 
-        <form @submit.prevent="handleCreateVoucher" class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+        <form @submit.prevent="handleSaveVoucher" class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">Mã Voucher (Viết hoa, không dấu) *</label>
             <input
@@ -195,6 +205,18 @@
             </div>
           </div>
 
+          <!-- Trạng thái hoạt động -->
+          <div class="pt-2">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input
+                v-model="form.isActive"
+                type="checkbox"
+                class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 border-slate-300"
+              />
+              <span class="text-xs font-semibold text-slate-700">Kích hoạt voucher ngay (Bật / Tắt)</span>
+            </label>
+          </div>
+
           <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
             <button
               type="button"
@@ -209,7 +231,7 @@
               class="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-medium text-sm transition shadow-sm disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
             >
               <Loader2 v-if="isSubmitting" class="w-4 h-4 animate-spin" />
-              <span>Tạo Mã Giảm Giá</span>
+              <span>{{ isEditing ? 'Lưu Thay Đổi' : 'Tạo Mã Giảm Giá' }}</span>
             </button>
           </div>
         </form>
@@ -232,6 +254,10 @@ const alertType = ref<'success' | 'error'>('success')
 
 // Modal state
 const isModalOpen = ref(false)
+const isEditing = ref(false)
+const editingVoucherId = ref<string | null>(null)
+const editingVoucherCode = ref('')
+
 const form = ref<{
   code: string
   type: 'fixed' | 'percent'
@@ -273,6 +299,9 @@ onMounted(() => {
 })
 
 const openCreateModal = () => {
+  isEditing.value = false
+  editingVoucherId.value = null
+  editingVoucherCode.value = ''
   form.value = {
     code: '',
     type: 'fixed',
@@ -283,7 +312,24 @@ const openCreateModal = () => {
   isModalOpen.value = true
 }
 
-const handleCreateVoucher = async () => {
+const openEditModal = (v: any) => {
+  isEditing.value = true
+  editingVoucherId.value = v.id
+  editingVoucherCode.value = v.code
+  form.value = {
+    code: v.code,
+    type: v.type,
+    valueAmount: v.valueAmount || 20000,
+    valuePercent: v.valuePercent || 10,
+    maxDiscountAmount: v.maxDiscountAmount || undefined,
+    minOrderAmount: v.minOrderAmount || 0,
+    totalUsageLimit: v.totalUsageLimit || undefined,
+    isActive: v.isActive !== false,
+  }
+  isModalOpen.value = true
+}
+
+const handleSaveVoucher = async () => {
   isSubmitting.value = true
   try {
     const payload: any = {
@@ -291,23 +337,32 @@ const handleCreateVoucher = async () => {
       type: form.value.type,
       minOrderAmount: form.value.minOrderAmount || 0,
       totalUsageLimit: form.value.totalUsageLimit || null,
-      isActive: true,
-      productIds: [],
+      isActive: form.value.isActive,
     }
 
     if (form.value.type === 'fixed') {
       payload.valueAmount = form.value.valueAmount
+      payload.valuePercent = null
+      payload.maxDiscountAmount = null
     } else {
       payload.valuePercent = form.value.valuePercent
       payload.maxDiscountAmount = form.value.maxDiscountAmount || null
+      payload.valueAmount = null
     }
 
-    await adminService.createVoucher(payload)
-    showAlert(`Đã tạo thành công mã giảm giá ${payload.code}!`)
+    if (isEditing.value && editingVoucherId.value) {
+      await adminService.updateVoucher(editingVoucherId.value, payload)
+      showAlert(`Đã cập nhật mã giảm giá ${payload.code} thành công!`)
+    } else {
+      payload.productIds = []
+      await adminService.createVoucher(payload)
+      showAlert(`Đã tạo thành công mã giảm giá ${payload.code}!`)
+    }
+
     isModalOpen.value = false
     await loadVouchers()
   } catch (err: any) {
-    const msg = err.response?.data?.error?.message || err.message || 'Lỗi tạo voucher'
+    const msg = err.response?.data?.error?.message || err.message || 'Lỗi lưu voucher'
     showAlert(msg, 'error')
   } finally {
     isSubmitting.value = false
@@ -317,7 +372,7 @@ const handleCreateVoucher = async () => {
 const toggleVoucherStatus = async (v: any) => {
   const newStatus = !v.isActive
   try {
-    await adminService.createVoucher({ ...v, isActive: newStatus }) // hoặc patch
+    await adminService.updateVoucher(v.id, { isActive: newStatus })
     showAlert(`Đã ${newStatus ? 'bật' : 'tắt'} voucher ${v.code}!`)
     await loadVouchers()
   } catch (err: any) {

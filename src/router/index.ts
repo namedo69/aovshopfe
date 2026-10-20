@@ -24,6 +24,7 @@ import AdminUsersPage from '@/pages/admin/AdminUsersPage.vue'
 import AdminOrdersPage from '@/pages/admin/AdminOrdersPage.vue'
 import AdminDepositsPage from '@/pages/admin/AdminDepositsPage.vue'
 import AdminVouchersPage from '@/pages/admin/AdminVouchersPage.vue'
+import AdminUserTiersPage from '@/pages/admin/AdminUserTiersPage.vue'
 
 const routes: RouteRecordRaw[] = [
   // Customer Routes
@@ -56,6 +57,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'orders', name: 'admin-orders', component: AdminOrdersPage, meta: { title: 'Quản lý đơn hàng' } },
       { path: 'deposits', name: 'admin-deposits', component: AdminDepositsPage, meta: { title: 'Lịch sử nạp tiền' } },
       { path: 'vouchers', name: 'admin-vouchers', component: AdminVouchersPage, meta: { title: 'Quản lý Voucher' } },
+      { path: 'tiers', name: 'admin-tiers', component: AdminUserTiersPage, meta: { title: 'Loại người dùng & Giá' } },
     ],
   },
 

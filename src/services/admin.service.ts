@@ -1,5 +1,5 @@
 import { apiClient } from './api'
-import type { Product, BackendProduct, Order, Deposit, Voucher, User } from '@/types'
+import type { Product, BackendProduct, Order, Deposit, Voucher, User, UserTier, TierProductPrice } from '@/types'
 import { mapBackendProduct } from './product.service'
 import { mapBackendOrder } from './order.service'
 
@@ -30,9 +30,17 @@ export interface AdminUserListItem {
   email: string
   name: string
   role: 'customer' | 'admin'
+  tierId?: string
+  tierName?: string
+  tierCode?: string
+  tierDiscount?: number
   status: 'active' | 'blocked'
   createdAt: string
   balance?: number
+  totalOrders?: number
+  completedOrders?: number
+  processingOrders?: number
+  totalSpent?: number
 }
 
 export const adminService = {
@@ -42,7 +50,7 @@ export const adminService = {
     return res.data
   },
 
-  async updateUser(id: string, data: { status?: 'active' | 'blocked'; role?: 'customer' | 'admin'; name?: string }): Promise<User> {
+  async updateUser(id: string, data: { status?: 'active' | 'blocked'; role?: 'customer' | 'admin'; tierId?: string; name?: string }): Promise<User> {
     const res = await apiClient.patch<User>(`/admin/users/${id}`, data)
     return res.data
   },
@@ -188,6 +196,45 @@ export const adminService = {
 
   async createVoucher(data: Partial<Voucher>): Promise<Voucher> {
     const res = await apiClient.post<Voucher>('/admin/vouchers', data)
+    return res.data
+  },
+
+  async updateVoucher(id: string, data: Partial<Voucher>): Promise<Voucher> {
+    const res = await apiClient.patch<Voucher>(`/admin/vouchers/${id}`, data)
+    return res.data
+  },
+
+  async deleteVoucher(id: string): Promise<void> {
+    await apiClient.delete(`/admin/vouchers/${id}`)
+  },
+
+  // Quản lý Loại Người Dùng (User Tiers) & Cấu hình giá
+  async getUserTiers(): Promise<UserTier[]> {
+    const res = await apiClient.get<UserTier[]>('/admin/tiers')
+    return res.data
+  },
+
+  async createUserTier(data: Partial<UserTier>): Promise<UserTier> {
+    const res = await apiClient.post<UserTier>('/admin/tiers', data)
+    return res.data
+  },
+
+  async updateUserTier(id: string, data: Partial<UserTier>): Promise<UserTier> {
+    const res = await apiClient.patch<UserTier>(`/admin/tiers/${id}`, data)
+    return res.data
+  },
+
+  async deleteUserTier(id: string): Promise<void> {
+    await apiClient.delete(`/admin/tiers/${id}`)
+  },
+
+  async getTierPrices(tierId: string): Promise<{ tier: UserTier; products: TierProductPrice[] }> {
+    const res = await apiClient.get<{ tier: UserTier; products: TierProductPrice[] }>(`/admin/tiers/${tierId}/prices`)
+    return res.data
+  },
+
+  async setTierProductPrice(tierId: string, productId: string, customPriceAmount: number | null): Promise<any> {
+    const res = await apiClient.post(`/admin/tiers/${tierId}/prices`, { productId, customPriceAmount })
     return res.data
   },
 }

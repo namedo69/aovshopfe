@@ -77,9 +77,9 @@
         <thead class="bg-slate-50 text-slate-500 text-xs border-b border-slate-100">
           <tr>
             <th class="py-3.5 px-6 font-semibold">Tên & Email</th>
-            <th class="py-3.5 px-6 font-semibold">Vai Trò</th>
+            <th class="py-3.5 px-6 font-semibold">Loại Tài Khoản</th>
+            <th class="py-3.5 px-6 font-semibold">Thống Kê Đơn</th>
             <th class="py-3.5 px-6 font-semibold">Số Dư Ví</th>
-            <th class="py-3.5 px-6 font-semibold">Ngày Tạo</th>
             <th class="py-3.5 px-6 font-semibold">Trạng Thái</th>
             <th class="py-3.5 px-6 font-semibold text-right">Thao Tác</th>
           </tr>
@@ -89,22 +89,53 @@
             <td class="py-4 px-6">
               <div class="font-medium text-slate-900">{{ user.name || 'Chưa đặt tên' }}</div>
               <div class="text-xs text-slate-400 font-mono">{{ user.email }}</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">Tạo: {{ formatDate(user.createdAt) }}</div>
             </td>
             <td class="py-4 px-6">
-              <span
-                :class="[
-                  'px-2.5 py-0.5 rounded-full text-xs font-semibold',
-                  user.role === 'admin' ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'bg-slate-100 text-slate-600'
-                ]"
-              >
-                {{ user.role === 'admin' ? '👑 Quản Trị Viên' : 'Khách Hàng' }}
-              </span>
+              <div class="space-y-1">
+                <span
+                  :class="[
+                    'px-2.5 py-0.5 rounded-full text-xs font-semibold inline-flex items-center gap-1',
+                    user.role === 'admin' || user.tierCode === 'admin'
+                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                      : user.tierCode === 'ctv'
+                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                      : 'bg-slate-100 text-slate-700 border border-slate-200'
+                  ]"
+                >
+                  <span>{{ user.role === 'admin' ? '👑' : user.tierCode === 'ctv' ? '⭐' : '👤' }}</span>
+                  <span>{{ user.tierName || (user.role === 'admin' ? 'Quản trị viên' : 'Thành viên') }}</span>
+                  <span class="text-[10px] opacity-75 font-mono">({{ user.role === 'admin' ? '-100%' : `-${user.tierDiscount || 0}%` }})</span>
+                </span>
+                <button
+                  @click="openTierModal(user)"
+                  class="block text-[11px] text-sky-600 hover:text-sky-700 font-medium hover:underline cursor-pointer"
+                >
+                  Đổi loại tài khoản
+                </button>
+              </div>
+            </td>
+            <!-- Thống kê số đơn của từng tài khoản -->
+            <td class="py-4 px-6">
+              <div class="space-y-0.5">
+                <div class="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                  <span>{{ user.totalOrders || 0 }} đơn hàng</span>
+                </div>
+                <div class="flex items-center gap-1.5 text-[11px]">
+                  <span class="text-emerald-600 font-semibold bg-emerald-50 px-1.5 py-0.2 rounded">
+                    {{ user.completedOrders || 0 }} xong
+                  </span>
+                  <span v-if="(user.processingOrders || 0) > 0" class="text-amber-600 font-semibold bg-amber-50 px-1.5 py-0.2 rounded">
+                    {{ user.processingOrders }} đang chạy
+                  </span>
+                </div>
+                <div class="text-[11px] text-slate-400">
+                  Đã chi: <span class="font-semibold text-slate-600">{{ formatVND(user.totalSpent || 0) }}</span>
+                </div>
+              </div>
             </td>
             <td class="py-4 px-6 font-bold text-sky-600">
               {{ formatVND(user.balance ?? 0) }}
-            </td>
-            <td class="py-4 px-6 text-xs text-slate-400">
-              {{ formatDate(user.createdAt) }}
             </td>
             <td class="py-4 px-6">
               <span
@@ -117,46 +148,34 @@
                 {{ user.status === 'active' ? 'Hoạt động' : 'Đã khóa' }}
               </span>
             </td>
-            <td class="py-4 px-6 text-right space-x-3">
+            <td class="py-4 px-6 text-right space-y-1">
               <!-- Nút cộng/trừ tiền ví -->
-              <button
-                @click="openBalanceModal(user)"
-                class="text-xs text-emerald-600 hover:text-emerald-700 font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer"
-              >
-                <PlusCircle class="w-3.5 h-3.5" /> Chỉnh số dư
-              </button>
-
-              <!-- Đổi vai trò -->
-              <button
-                v-if="user.role === 'customer'"
-                @click="toggleRole(user, 'admin')"
-                class="text-xs text-sky-600 font-medium hover:underline cursor-pointer"
-              >
-                Thăng Admin
-              </button>
-              <button
-                v-else
-                @click="toggleRole(user, 'customer')"
-                class="text-xs text-slate-500 font-medium hover:underline cursor-pointer"
-              >
-                Hạ Khách
-              </button>
+              <div>
+                <button
+                  @click="openBalanceModal(user)"
+                  class="text-xs text-emerald-600 hover:text-emerald-700 font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <PlusCircle class="w-3.5 h-3.5" /> Chỉnh số dư
+                </button>
+              </div>
 
               <!-- Khóa / Mở khóa -->
-              <button
-                v-if="user.status === 'active'"
-                @click="toggleStatus(user, 'blocked')"
-                class="text-xs text-rose-600 font-medium hover:underline cursor-pointer"
-              >
-                Khóa
-              </button>
-              <button
-                v-else
-                @click="toggleStatus(user, 'active')"
-                class="text-xs text-emerald-600 font-medium hover:underline cursor-pointer"
-              >
-                Mở khóa
-              </button>
+              <div>
+                <button
+                  v-if="user.status === 'active'"
+                  @click="toggleStatus(user, 'blocked')"
+                  class="text-xs text-rose-600 font-medium hover:underline cursor-pointer"
+                >
+                  Khóa tài khoản
+                </button>
+                <button
+                  v-else
+                  @click="toggleStatus(user, 'active')"
+                  class="text-xs text-emerald-600 font-medium hover:underline cursor-pointer"
+                >
+                  Mở khóa
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -268,6 +287,81 @@
         </form>
       </div>
     </div>
+
+    <!-- Modal Phân Loại Người Dùng (Tier) -->
+    <div v-if="isTierModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-slate-800">Phân Loại Người Dùng</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Tài khoản: {{ targetTierUser?.email }}</p>
+          </div>
+          <button @click="isTierModalOpen = false" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+        </div>
+
+        <form @submit.prevent="handleSaveTier" class="p-6 space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-2">Chọn Loại Tài Khoản</label>
+            <div class="space-y-2">
+              <div
+                v-for="t in availableTiers"
+                :key="t.id"
+                @click="selectedTierId = t.id"
+                :class="[
+                  'p-3.5 rounded-xl border transition cursor-pointer flex items-center justify-between',
+                  selectedTierId === t.id
+                    ? 'border-sky-500 bg-sky-50/60 ring-2 ring-sky-500/20'
+                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                ]"
+              >
+                <div>
+                  <div class="font-bold text-sm text-slate-800 flex items-center gap-1.5">
+                    <span>{{ t.code === 'admin' ? '👑' : t.code === 'ctv' ? '⭐' : '👤' }}</span>
+                    <span>{{ t.name }}</span>
+                  </div>
+                  <div class="text-xs text-slate-400 mt-0.5">{{ t.description || 'Chưa có mô tả' }}</div>
+                </div>
+
+                <div class="text-right">
+                  <span
+                    :class="[
+                      'px-2.5 py-1 rounded-full text-xs font-bold font-mono',
+                      t.discountPercent > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                    ]"
+                  >
+                    -{{ t.discountPercent }}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800 space-y-1">
+            <div class="font-bold">Lưu ý khi phân loại:</div>
+            <div>• Quản trị viên (Admin) mặc định được giảm giá 100% khi tạo đơn.</div>
+            <div>• CTV sẽ được hưởng mức chiết khấu riêng theo cấu hình của loại.</div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              @click="isTierModalOpen = false"
+              class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 transition"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              :disabled="isSubmitting"
+              class="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-medium text-sm transition shadow-sm disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+            >
+              <Loader2 v-if="isSubmitting" class="w-4 h-4 animate-spin" />
+              <span>Cập Nhật Loại Tài Khoản</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -277,8 +371,10 @@ import { formatVND, formatDate } from '@/utils/format'
 import { Users, RotateCcw, Loader2, PlusCircle, Search } from 'lucide-vue-next'
 import AdminPagination from '@/components/common/AdminPagination.vue'
 import { adminService, type AdminUserListItem } from '@/services/admin.service'
+import type { UserTier } from '@/types'
 
 const usersList = ref<AdminUserListItem[]>([])
+const availableTiers = ref<UserTier[]>([])
 const isLoading = ref(false)
 const isSubmitting = ref(false)
 const alertMessage = ref('')
@@ -294,18 +390,23 @@ const currentRoleFilter = ref<string>('all')
 
 const roleFilters = computed(() => [
   { label: 'Tất cả', value: 'all', count: usersList.value.length },
-  { label: 'Khách hàng', value: 'customer', count: usersList.value.filter(u => u.role === 'customer').length },
-  { label: 'Admin', value: 'admin', count: usersList.value.filter(u => u.role === 'admin').length },
+  { label: 'Admin', value: 'admin', count: usersList.value.filter(u => u.role === 'admin' || u.tierCode === 'admin').length },
+  { label: 'CTV', value: 'ctv', count: usersList.value.filter(u => u.tierCode === 'ctv').length },
+  { label: 'Thành viên', value: 'member', count: usersList.value.filter(u => u.role !== 'admin' && u.tierCode !== 'ctv').length },
   { label: 'Đã khóa', value: 'blocked', count: usersList.value.filter(u => u.status === 'blocked').length },
 ])
 
 const filteredUsers = computed(() => {
   return usersList.value.filter((user) => {
-    // Lọc theo role hoặc status
+    // Lọc theo tier/role hoặc status
     if (currentRoleFilter.value === 'blocked') {
       if (user.status !== 'blocked') return false
-    } else if (currentRoleFilter.value !== 'all') {
-      if (user.role !== currentRoleFilter.value) return false
+    } else if (currentRoleFilter.value === 'admin') {
+      if (user.role !== 'admin' && user.tierCode !== 'admin') return false
+    } else if (currentRoleFilter.value === 'ctv') {
+      if (user.tierCode !== 'ctv') return false
+    } else if (currentRoleFilter.value === 'member') {
+      if (user.role === 'admin' || user.tierCode === 'ctv') return false
     }
 
     // Tìm kiếm
@@ -343,7 +444,12 @@ const showAlert = (msg: string, type: 'success' | 'error' = 'success') => {
 const loadUsers = async () => {
   isLoading.value = true
   try {
-    usersList.value = await adminService.getUsers()
+    const [users, tiers] = await Promise.all([
+      adminService.getUsers(),
+      adminService.getUserTiers(),
+    ])
+    usersList.value = users
+    availableTiers.value = tiers
   } catch (err: any) {
     showAlert('Không thể tải danh sách người dùng: ' + (err.message || ''), 'error')
   } finally {
@@ -354,6 +460,41 @@ const loadUsers = async () => {
 onMounted(() => {
   loadUsers()
 })
+
+// Modal Phân Loại
+const isTierModalOpen = ref(false)
+const targetTierUser = ref<AdminUserListItem | null>(null)
+const selectedTierId = ref<string>('')
+
+const openTierModal = (user: AdminUserListItem) => {
+  targetTierUser.value = user
+  selectedTierId.value = user.tierId || (user.role === 'admin' ? 'tier_admin' : 'tier_member')
+  isTierModalOpen.value = true
+}
+
+const handleSaveTier = async () => {
+  if (!targetTierUser.value || !selectedTierId.value) return
+  isSubmitting.value = true
+
+  try {
+    const chosenTier = availableTiers.value.find(t => t.id === selectedTierId.value)
+    const newRole = chosenTier?.code === 'admin' ? 'admin' : 'customer'
+
+    await adminService.updateUser(targetTierUser.value.id, {
+      tierId: selectedTierId.value,
+      role: newRole,
+    })
+
+    showAlert(`Đã cập nhật phân loại tài khoản "${targetTierUser.value.email}" thành ${chosenTier?.name || selectedTierId.value}!`)
+    isTierModalOpen.value = false
+    await loadUsers()
+  } catch (err: any) {
+    const msg = err.response?.data?.error?.message || err.message || 'Lỗi cập nhật phân loại'
+    showAlert(msg, 'error')
+  } finally {
+    isSubmitting.value = false
+  }
+}
 
 const predictedBalance = computed(() => {
   const current = targetUser.value?.balance ?? 0
@@ -389,23 +530,6 @@ const handleAdjustBalance = async () => {
     showAlert(msg, 'error')
   } finally {
     isSubmitting.value = false
-  }
-}
-
-const toggleRole = async (user: AdminUserListItem, newRole: 'customer' | 'admin') => {
-  const confirmMsg = newRole === 'admin'
-    ? `Bạn có chắc muốn thăng cấp tài khoản "${user.email}" thành Quản trị viên?`
-    : `Bạn có chắc muốn hạ tài khoản "${user.email}" xuống làm Khách hàng?`
-
-  if (!confirm(confirmMsg)) return
-
-  try {
-    await adminService.updateUser(user.id, { role: newRole })
-    showAlert(`Đã cập nhật quyền tài khoản "${user.email}" thành ${newRole}!`)
-    await loadUsers()
-  } catch (err: any) {
-    const msg = err.response?.data?.error?.message || err.message || 'Lỗi thao tác'
-    showAlert(msg, 'error')
   }
 }
 

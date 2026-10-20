@@ -8,9 +8,15 @@ export interface CreateOrderDTO {
   customerNote?: string
 }
 
+export interface CodeQuantityItem {
+  code: string
+  quantity: number
+}
+
 export interface CreateMultiCodeOrderDTO {
   productId: string
-  codes: string[]
+  codes?: string[]
+  items?: CodeQuantityItem[]
   voucherCode?: string
   customerNote?: string
 }
@@ -98,15 +104,19 @@ export const orderService = {
     return mapBackendOrder(res.data)
   },
 
-  // Tạo nhiều đơn hàng cùng lúc kèm giảm giá voucher trên toàn bộ tổng tiền
+  // Tạo nhiều đơn hàng cùng lúc kèm số lượng từng code và giảm giá voucher
   async createMultiOrders(data: CreateMultiCodeOrderDTO, idempotencyKey: string): Promise<any> {
+    const rawItems: CodeQuantityItem[] = data.items && data.items.length > 0
+      ? data.items
+      : (data.codes || []).map(c => ({ code: c, quantity: 1 }))
+
     const payload = {
-      items: data.codes.map(codeStr => ({
+      items: rawItems.map(item => ({
         productId: data.productId,
-        quantity: 1,
+        quantity: item.quantity > 0 ? item.quantity : 1,
         customerInput: {
-          accountId: codeStr,
-          code: codeStr,
+          accountId: item.code,
+          code: item.code,
         },
       })),
       voucherCode: data.voucherCode,

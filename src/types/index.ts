@@ -1,11 +1,43 @@
 export type UserRole = 'customer' | 'admin'
 
+export interface UserTier {
+  id: string
+  code: string
+  name: string
+  discountPercent: number
+  description?: string | null
+  isDefault: boolean
+  isActive: boolean
+  sortOrder: number
+  userCount?: number
+  createdAt?: string | number
+  updatedAt?: string | number
+}
+
+export interface TierProductPrice {
+  productId: string
+  productName: string
+  productSlug: string
+  originalPrice: number
+  salePrice: number | null
+  customPrice: number | null
+}
+
 export interface User {
   id: string
   email: string
   name?: string
   role: UserRole
+  tierId?: string
+  tierCode?: string
+  tierName?: string
+  tierDiscount?: number
   balance: number
+  totalOrders?: number
+  completedOrders?: number
+  processingOrders?: number
+  totalSpent?: number
+  status?: 'active' | 'blocked'
   createdAt: string
 }
 
@@ -116,12 +148,20 @@ export interface Voucher {
   id: string
   code: string
   type: 'fixed' | 'percent'
-  value: number
-  minOrderAmount: number
+  value?: number
+  valueAmount?: number | null
+  valuePercent?: number | null
+  minOrderAmount?: number
   maxDiscount?: number
-  startDate: string
-  endDate: string
-  usageLimit: number
-  usedCount: number
-  status: 'active' | 'inactive'
+  maxDiscountAmount?: number | null
+  totalUsageLimit?: number | null
+  perUserLimit?: number | null
+  usedCount?: number
+  startsAt?: string | number | null
+  endsAt?: string | number | null
+  startDate?: string
+  endDate?: string
+  usageLimit?: number
+  status?: 'active' | 'inactive'
+  isActive: boolean
 }

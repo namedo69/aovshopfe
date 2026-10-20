@@ -58,9 +58,9 @@
           </div>
           <router-link
             :to="`/products/${product.slug}`"
-            class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium transition"
+            class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold transition shadow-xs cursor-pointer"
           >
-            Chi tiết
+            Đặt Đơn Ngay
           </router-link>
         </div>
       </div>
