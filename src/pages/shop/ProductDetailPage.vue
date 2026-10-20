@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-[1750px] mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-5">
+  <div class="max-w-[1380px] mx-auto px-3 sm:px-6 py-6 space-y-5">
     <!-- Breadcrumb & Tiêu đề -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
@@ -83,119 +83,122 @@
 
     <!-- MAIN TWO-COLUMN LAYOUT -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-      <!-- CỘT TRÁI: KHU VỰC ĐẶT HÀNG (DIV CODE FLEX VỚI DIV THANH TOÁN) (8 / 12) -->
-      <div v-if="currentProduct" class="lg:col-span-7 xl:col-span-8">
-        <div class="flex flex-col md:flex-row gap-4 items-start">
-          <!-- DIV CODE: NHẬP DANH SÁCH CODE & SỐ LƯỢNG (FLEX-1) -->
-          <div class="flex-1 w-full bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-              <div>
-                <div class="flex items-center gap-2">
-                  <h3 class="text-sm font-bold text-slate-900">Danh Sách Code & Số Lượng</h3>
-                  <span class="text-xs font-bold text-sky-600">({{ currentProduct.name }})</span>
-                </div>
-                <p class="text-[11px] text-slate-400 mt-0.5">Nhập mã code và ô số lượng tương ứng bên cạnh</p>
-              </div>
-
-              <!-- Badge cấp bậc & số lượng dòng -->
-              <div class="flex items-center gap-2">
-                <span
-                  v-if="authStore.isAdmin"
-                  class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200"
-                >
-                  👑 Giảm 100%
-                </span>
-                <span
-                  v-else-if="authStore.userTierDiscount > 0"
-                  class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200"
-                >
-                  ⭐ Giảm {{ authStore.userTierDiscount }}%
-                </span>
-                <span :class="['text-xs font-semibold px-2 py-0.5 rounded-full', codeRows.length >= 10 ? 'bg-amber-100 text-amber-800' : 'bg-sky-100 text-sky-700']">
-                  {{ codeRows.length }}/10 dòng
-                </span>
-              </div>
-            </div>
-
-            <!-- Danh sách từng dòng: STT, Code Input, Số lượng Box, Nút Xóa -->
-            <div class="space-y-2">
-              <div
-                v-for="(row, idx) in codeRows"
-                :key="idx"
-                class="flex items-center gap-2 p-2 rounded-xl bg-slate-50/70 border border-slate-200 focus-within:border-sky-500 focus-within:bg-white transition"
-              >
-                <!-- STT -->
-                <div class="w-6 h-6 rounded-lg bg-sky-100 text-sky-700 font-bold text-xs flex items-center justify-center shrink-0">
-                  #{{ idx + 1 }}
+      <!-- CỘT TRÁI: KHU VỰC ĐẶT HÀNG (DIV CODE FLEX VỚI DIV THANH TOÁN) (6 / 12) -->
+      <div v-if="currentProduct" class="lg:col-span-6 xl:col-span-6">
+        <div class="flex flex-col sm:flex-row gap-3.5 items-stretch">
+          <!-- DIV CODE: NHẬP DANH SÁCH CODE & SỐ LƯỢNG (FLEX-1, HEIGHT BẰNG THANH TOÁN, TỰ NỚI RỘNG KHI THÊM CODE) -->
+          <div class="flex-1 min-w-0 w-full bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col justify-between space-y-3 min-h-full">
+            <div class="space-y-3 flex-1 flex flex-col">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <h3 class="text-xs sm:text-sm font-bold text-slate-900">Danh Sách Code</h3>
+                    <span class="text-xs font-bold text-sky-600 truncate max-w-[120px]" :title="currentProduct.name">({{ currentProduct.name }})</span>
+                  </div>
+                  <p class="text-[10px] text-slate-400 mt-0.5">Nhập mã code và ô số lượng tương ứng</p>
                 </div>
 
-                <!-- Input Code -->
-                <input
-                  v-model="row.code"
-                  type="text"
-                  required
-                  :placeholder="`Nhập mã code sự kiện #${idx + 1}...`"
-                  class="flex-1 px-2.5 py-1 text-xs bg-transparent outline-none font-mono font-medium text-slate-800"
-                />
+                <!-- Badge cấp bậc & số lượng dòng -->
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <span
+                    v-if="authStore.isAdmin"
+                    class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200"
+                  >
+                    👑 -100%
+                  </span>
+                  <span
+                    v-else-if="authStore.userTierDiscount > 0"
+                    class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200"
+                  >
+                    ⭐ -{{ authStore.userTierDiscount }}%
+                  </span>
+                  <span :class="['text-[11px] font-semibold px-2 py-0.2 rounded-full', codeRows.length >= 10 ? 'bg-amber-100 text-amber-800' : 'bg-sky-100 text-sky-700']">
+                    {{ codeRows.length }}/10
+                  </span>
+                </div>
+              </div>
 
-                <!-- Ô Số lượng bên cạnh code -->
-                <div class="flex items-center gap-1 px-2 py-1 bg-white rounded-lg border border-slate-200 shrink-0">
-                  <span class="text-[10px] font-semibold text-slate-400 uppercase">SL:</span>
+              <!-- Danh sách từng dòng: STT, Code Input, Số lượng Box, Nút Xóa -->
+              <div class="space-y-2 flex-1">
+                <div
+                  v-for="(row, idx) in codeRows"
+                  :key="idx"
+                  class="flex items-center gap-1.5 p-1.5 rounded-xl bg-slate-50/70 border border-slate-200 focus-within:border-sky-500 focus-within:bg-white transition"
+                >
+                  <!-- STT -->
+                  <div class="w-5 h-5 rounded-md bg-sky-100 text-sky-700 font-bold text-[10px] flex items-center justify-center shrink-0">
+                    #{{ idx + 1 }}
+                  </div>
+
+                  <!-- Input Code -->
                   <input
-                    v-model.number="row.quantity"
-                    type="number"
-                    min="1"
-                    max="1000"
-                    class="w-12 text-center text-xs font-bold text-slate-800 outline-none"
+                    v-model="row.code"
+                    type="text"
+                    required
+                    :placeholder="`Mã code #${idx + 1}...`"
+                    class="flex-1 px-2 py-1 text-xs bg-transparent outline-none font-mono font-medium text-slate-800 min-w-0"
                   />
-                </div>
 
-                <!-- Nút Xóa dòng (nếu > 1 dòng) -->
-                <button
-                  v-if="codeRows.length > 1"
-                  type="button"
-                  @click="removeCodeRow(idx)"
-                  class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition cursor-pointer"
-                  title="Xóa dòng này"
-                >
-                  <Trash2 class="w-3.5 h-3.5" />
-                </button>
+                  <!-- Ô Số lượng bên cạnh code -->
+                  <div class="flex items-center gap-1 px-1.5 py-0.5 bg-white rounded-lg border border-slate-200 shrink-0">
+                    <span class="text-[9px] font-semibold text-slate-400 uppercase">SL:</span>
+                    <input
+                      v-model.number="row.quantity"
+                      type="number"
+                      min="1"
+                      max="1000"
+                      class="w-10 text-center text-xs font-bold text-slate-800 outline-none"
+                    />
+                  </div>
+
+                  <!-- Nút Xóa dòng (nếu > 1 dòng) -->
+                  <button
+                    v-if="codeRows.length > 1"
+                    type="button"
+                    @click="removeCodeRow(idx)"
+                    class="p-1 text-slate-400 hover:text-rose-600 rounded-md hover:bg-rose-50 transition cursor-pointer shrink-0"
+                    title="Xóa dòng này"
+                  >
+                    <Trash2 class="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
 
-            <!-- Thêm dòng code mới -->
-            <div class="pt-1 flex items-center justify-between">
-              <button
-                v-if="codeRows.length < 10"
-                type="button"
-                @click="addCodeRow"
-                class="flex items-center gap-1.5 text-xs font-semibold text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 px-3 py-1.5 rounded-xl border border-sky-200 transition cursor-pointer"
-              >
-                <Plus class="w-3.5 h-3.5" /> Thêm Code Khác
-              </button>
-              <span v-else class="text-[11px] text-amber-600 font-medium">
-                ⚠️ Tối đa 10 code / lần.
-              </span>
+            <!-- Bottom actions: Thêm dòng code + Ghi chú -->
+            <div class="pt-2 border-t border-slate-100 space-y-2">
+              <div class="flex items-center justify-between">
+                <button
+                  v-if="codeRows.length < 10"
+                  type="button"
+                  @click="addCodeRow"
+                  class="flex items-center gap-1 text-[11px] font-semibold text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-lg border border-sky-200 transition cursor-pointer"
+                >
+                  <Plus class="w-3 h-3" /> Thêm Code
+                </button>
+                <span v-else class="text-[10px] text-amber-600 font-medium">
+                  ⚠️ Tối đa 10 code.
+                </span>
 
-              <span class="text-xs text-slate-500 font-medium">
-                Tổng SL: <strong class="text-slate-900 font-bold">{{ totalItemsQuantity }} cái</strong>
-              </span>
-            </div>
+                <span class="text-[11px] text-slate-500 font-medium">
+                  Tổng SL: <strong class="text-slate-900 font-bold">{{ totalItemsQuantity }} cái</strong>
+                </span>
+              </div>
 
-            <!-- Ghi chú cho đơn hàng -->
-            <div class="pt-2 border-t border-slate-100">
-              <label class="block text-[11px] font-semibold text-slate-700 mb-1">Ghi chú cho đơn hàng (tùy chọn)</label>
-              <textarea
-                v-model="customerNote"
-                rows="1"
-                placeholder="Ghi chú thêm nếu cần thiết..."
-                class="w-full px-3 py-1.5 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-xs outline-none bg-slate-50/50"
-              ></textarea>
+              <!-- Ghi chú cho đơn hàng -->
+              <div>
+                <input
+                  v-model="customerNote"
+                  type="text"
+                  placeholder="Ghi chú đơn hàng (nếu có)..."
+                  class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-[11px] outline-none bg-slate-50/50"
+                />
+              </div>
             </div>
           </div>
 
           <!-- DIV THANH TOÁN (FLEX BÊN CẠNH DIV CODE): VOUCHER, TẠM TÍNH, SỐ DƯ, NÚT ĐẶT ĐƠN -->
-          <div class="w-full md:w-[320px] lg:w-[340px] xl:w-[360px] shrink-0 space-y-3.5">
+          <div class="w-full sm:w-[280px] xl:w-[290px] shrink-0 flex flex-col justify-between space-y-3">
             <!-- Form Voucher -->
             <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-2.5">
               <div class="flex items-center justify-between">
@@ -241,7 +244,7 @@
             </div>
 
             <!-- Tóm Tắt Thanh Toán & Nút Đặt Đơn Ngay -->
-            <div class="bg-white rounded-2xl border border-sky-100 p-4 shadow-xs space-y-3.5">
+            <div class="bg-white rounded-2xl border border-sky-100 p-4 shadow-xs space-y-3.5 flex-1 flex flex-col justify-between">
               <h3 class="text-xs font-bold text-slate-800 pb-2 border-b border-slate-100 uppercase tracking-wider">
                 Thanh Toán Đơn Hàng
               </h3>
@@ -328,8 +331,8 @@
         </div>
       </div>
 
-      <!-- CỘT PHẢI: TIẾN ĐỘ & LỊCH SỬ ĐƠN HÀNG (ĐÃ BỎ CỘT MÃ ĐƠN, THANH TOÁN, CHI TIẾT) (5 / 12) -->
-      <div class="lg:col-span-5 xl:col-span-4 space-y-4">
+      <!-- CỘT PHẢI: TIẾN ĐỘ & LỊCH SỬ ĐƠN HÀNG (RỘNG HƠN - 6 / 12) -->
+      <div class="lg:col-span-6 xl:col-span-6 space-y-4">
         <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-3.5">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div>
