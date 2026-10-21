@@ -38,6 +38,7 @@ export interface AdminUserListItem {
   createdAt: string
   balance?: number
   totalOrders?: number
+  totalCodes?: number
   completedOrders?: number
   processingOrders?: number
   totalSpent?: number
@@ -58,6 +59,15 @@ export const adminService = {
   async adjustUserBalance(id: string, amount: number, reason: string): Promise<{ userId: string; balance: number; amountAdjusted: number }> {
     const res = await apiClient.post(`/admin/users/${id}/balance`, { amount, reason })
     return res.data
+  },
+
+  // Lấy toàn bộ đơn hàng và code sự kiện của 1 tài khoản cụ thể
+  async getUserOrders(userId: string): Promise<Order[]> {
+    const res = await apiClient.get<any[]>(`/admin/users/${userId}/orders`)
+    if (Array.isArray(res.data)) {
+      return res.data.map(mapBackendOrder)
+    }
+    return []
   },
 
   // Thống kê Dashboard: lấy từ cả orders report và cashflow report

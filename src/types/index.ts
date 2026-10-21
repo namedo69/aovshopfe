@@ -34,6 +34,7 @@ export interface User {
   tierDiscount?: number
   balance: number
   totalOrders?: number
+  totalCodes?: number
   completedOrders?: number
   processingOrders?: number
   totalSpent?: number

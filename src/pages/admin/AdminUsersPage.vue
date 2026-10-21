@@ -117,9 +117,12 @@
             </td>
             <!-- Thống kê số đơn của từng tài khoản -->
             <td class="py-4 px-6">
-              <div class="space-y-0.5">
+              <div class="space-y-1">
                 <div class="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-                  <span>{{ user.totalOrders || 0 }} đơn hàng</span>
+                  <span>{{ user.totalOrders || 0 }} đơn</span>
+                  <span class="text-sky-700 font-extrabold bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200">
+                    {{ user.totalCodes || user.totalOrders || 0 }} code
+                  </span>
                 </div>
                 <div class="flex items-center gap-1.5 text-[11px]">
                   <span class="text-emerald-600 font-semibold bg-emerald-50 px-1.5 py-0.2 rounded">
@@ -129,8 +132,14 @@
                     {{ user.processingOrders }} đang chạy
                   </span>
                 </div>
-                <div class="text-[11px] text-slate-400">
-                  Đã chi: <span class="font-semibold text-slate-600">{{ formatVND(user.totalSpent || 0) }}</span>
+                <div class="flex items-center justify-between text-[11px] pt-0.5">
+                  <span class="text-slate-400">Chi: <strong class="text-slate-700">{{ formatVND(user.totalSpent || 0) }}</strong></span>
+                  <button
+                    @click="openUserOrdersModal(user)"
+                    class="text-sky-600 hover:text-sky-700 font-bold hover:underline inline-flex items-center gap-1 cursor-pointer ml-2"
+                  >
+                    <Eye class="w-3 h-3" /> Xem {{ user.totalCodes || user.totalOrders || 0 }} code
+                  </button>
                 </div>
               </div>
             </td>
@@ -149,6 +158,16 @@
               </span>
             </td>
             <td class="py-4 px-6 text-right space-y-1">
+              <!-- Nút Xem Code & Đơn Hàng -->
+              <div>
+                <button
+                  @click="openUserOrdersModal(user)"
+                  class="text-xs text-sky-600 hover:text-sky-700 font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <Eye class="w-3.5 h-3.5" /> Xem Code ({{ user.totalCodes || user.totalOrders || 0 }})
+                </button>
+              </div>
+
               <!-- Nút cộng/trừ tiền ví -->
               <div>
                 <button
@@ -362,16 +381,167 @@
         </form>
       </div>
     </div>
+
+    <!-- Modal Xem Chi Tiết Code & Đơn Hàng Của Tài Khoản Cụ Thể -->
+    <div v-if="isOrdersModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
+        <div class="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-lg font-bold text-slate-800">Chi Tiết Code & Đơn Hàng</h3>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                {{ targetOrdersUser?.name || 'Khách hàng' }}
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Email: <strong class="text-slate-700 font-mono">{{ targetOrdersUser?.email }}</strong> • 
+              Loại: <span class="font-bold text-sky-600">{{ targetOrdersUser?.tierName || 'Thành viên' }}</span> • 
+              Số dư: <span class="font-bold text-emerald-600">{{ formatVND(targetOrdersUser?.balance ?? 0) }}</span>
+            </p>
+          </div>
+          <button @click="isOrdersModalOpen = false" class="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer">✕</button>
+        </div>
+
+        <!-- 4 Thẻ KPI thống kê nhanh -->
+        <div class="p-6 pb-2 shrink-0 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+            <div class="text-[11px] font-semibold text-slate-400 uppercase">Tổng số đơn</div>
+            <div class="text-xl font-black text-slate-800 mt-1">{{ userOrdersList.length }} đơn</div>
+          </div>
+
+          <div class="bg-sky-50 p-3.5 rounded-xl border border-sky-200">
+            <div class="text-[11px] font-semibold text-sky-700 uppercase">Tổng số code đã đặt</div>
+            <div class="text-xl font-black text-sky-600 mt-1">{{ modalTotalCodes }} code</div>
+          </div>
+
+          <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200">
+            <div class="text-[11px] font-semibold text-emerald-700 uppercase">Đã hoàn thành</div>
+            <div class="text-xl font-black text-emerald-600 mt-1">{{ modalCompletedCodes }} code</div>
+          </div>
+
+          <div class="bg-purple-50 p-3.5 rounded-xl border border-purple-200">
+            <div class="text-[11px] font-semibold text-purple-700 uppercase">Tổng chi tiêu</div>
+            <div class="text-xl font-black text-purple-700 mt-1">{{ formatVND(modalTotalSpent) }}</div>
+          </div>
+        </div>
+
+        <!-- Search bar inside modal -->
+        <div class="px-6 py-2 shrink-0 flex items-center justify-between gap-4">
+          <div class="relative flex-1">
+            <input
+              v-model="orderModalSearchQuery"
+              type="text"
+              placeholder="Tìm theo mã đơn, mã code sự kiện, tên gói..."
+              class="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs outline-none bg-slate-50/50 focus:border-sky-500"
+            />
+            <Search class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+          </div>
+
+          <button
+            @click="refreshUserOrders"
+            :disabled="isLoadingUserOrders"
+            class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 flex items-center gap-1.5 cursor-pointer"
+          >
+            <RotateCcw :class="['w-3.5 h-3.5', isLoadingUserOrders && 'animate-spin text-sky-600']" />
+            <span>Làm mới</span>
+          </button>
+        </div>
+
+        <!-- Orders Table List -->
+        <div class="p-6 pt-2 overflow-y-auto flex-1">
+          <div v-if="isLoadingUserOrders" class="py-16 text-center text-slate-400">
+            <Loader2 class="w-8 h-8 animate-spin mx-auto mb-2 text-sky-500" />
+            <span class="text-xs">Đang tải toàn bộ code và đơn hàng của tài khoản...</span>
+          </div>
+
+          <div v-else-if="filteredUserOrders.length === 0" class="py-16 text-center text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+            <Users class="w-10 h-10 mx-auto mb-2 text-slate-300 stroke-[1.2]" />
+            <p class="font-medium text-slate-600 text-sm">Tài khoản này chưa đặt đơn hàng nào</p>
+          </div>
+
+          <div v-else class="overflow-hidden rounded-2xl border border-slate-200">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 text-[11px] border-b border-slate-100">
+                <tr>
+                  <th class="py-2.5 px-4 font-semibold">Mã Đơn & Thời Gian</th>
+                  <th class="py-2.5 px-4 font-semibold">Gói Dịch Vụ</th>
+                  <th class="py-2.5 px-4 font-semibold">Mã Code Sự Kiện</th>
+                  <th class="py-2.5 px-3 font-semibold text-center">Số Lượng</th>
+                  <th class="py-2.5 px-4 font-semibold">Thanh Toán</th>
+                  <th class="py-2.5 px-4 font-semibold text-right">Trạng Thái</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-700">
+                <tr v-for="ord in filteredUserOrders" :key="ord.id" class="hover:bg-slate-50/50 transition">
+                  <td class="py-3 px-4 font-mono font-bold text-slate-800">
+                    <div>{{ ord.orderCode }}</div>
+                    <div class="text-[10px] text-slate-400 font-sans font-normal mt-0.5">{{ formatDate(ord.createdAt) }}</div>
+                  </td>
+
+                  <td class="py-3 px-4 font-semibold text-slate-800">
+                    {{ ord.items?.[0]?.productName || 'Gói Dịch Vụ' }}
+                  </td>
+
+                  <td class="py-3 px-4">
+                    <div class="flex items-center gap-1.5 font-mono text-xs font-bold text-sky-800">
+                      <span>{{ getOrderCode(ord) || '—' }}</span>
+                      <button
+                        v-if="getOrderCode(ord)"
+                        @click="copyCode(getOrderCode(ord))"
+                        class="text-slate-400 hover:text-sky-600 transition p-1 rounded hover:bg-sky-50"
+                        title="Copy mã code"
+                      >
+                        <Copy class="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </td>
+
+                  <td class="py-3 px-3 text-center font-bold text-slate-800">
+                    x{{ ord.items?.[0]?.quantity || 1 }}
+                  </td>
+
+                  <td class="py-3 px-4 font-bold text-slate-800">
+                    {{ formatVND(ord.finalAmount) }}
+                  </td>
+
+                  <td class="py-3 px-4 text-right">
+                    <span
+                      :class="[
+                        'px-2.5 py-1 rounded-full text-[11px] font-semibold inline-flex items-center gap-1',
+                        statusStyles[ord.status] || 'bg-slate-100 text-slate-600'
+                      ]"
+                    >
+                      <span :class="['w-1.5 h-1.5 rounded-full', statusDots[ord.status] || 'bg-slate-400']"></span>
+                      {{ statusLabels[ord.status] || ord.status }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="p-4 border-t border-slate-100 flex items-center justify-end shrink-0">
+          <button
+            type="button"
+            @click="isOrdersModalOpen = false"
+            class="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs transition cursor-pointer"
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { formatVND, formatDate } from '@/utils/format'
-import { Users, RotateCcw, Loader2, PlusCircle, Search } from 'lucide-vue-next'
+import { Users, RotateCcw, Loader2, PlusCircle, Search, Eye, Copy } from 'lucide-vue-next'
 import AdminPagination from '@/components/common/AdminPagination.vue'
 import { adminService, type AdminUserListItem } from '@/services/admin.service'
-import type { UserTier } from '@/types'
+import type { UserTier, Order, OrderStatus } from '@/types'
 
 const usersList = ref<AdminUserListItem[]>([])
 const availableTiers = ref<UserTier[]>([])
@@ -379,6 +549,101 @@ const isLoading = ref(false)
 const isSubmitting = ref(false)
 const alertMessage = ref('')
 const alertType = ref<'success' | 'error'>('success')
+
+// Modal Xem Chi Tiết Code & Đơn Hàng của User
+const isOrdersModalOpen = ref(false)
+const targetOrdersUser = ref<AdminUserListItem | null>(null)
+const userOrdersList = ref<Order[]>([])
+const isLoadingUserOrders = ref(false)
+const orderModalSearchQuery = ref('')
+
+const statusLabels: Record<OrderStatus, string> = {
+  queued: 'Chờ gửi',
+  sending: 'Đang gửi đối tác',
+  processing: 'Đang xử lý',
+  completed: 'Hoàn tất (Done)',
+  failed: 'Thất bại',
+  refunded: 'Đã hoàn tiền',
+  cancelled: 'Đã hủy',
+}
+
+const statusStyles: Record<OrderStatus, string> = {
+  queued: 'bg-slate-100 text-slate-700',
+  sending: 'bg-sky-50 text-sky-700',
+  processing: 'bg-amber-50 text-amber-700',
+  completed: 'bg-emerald-50 text-emerald-700',
+  failed: 'bg-rose-50 text-rose-700',
+  refunded: 'bg-purple-50 text-purple-700',
+  cancelled: 'bg-slate-100 text-slate-600',
+}
+
+const statusDots: Record<OrderStatus, string> = {
+  queued: 'bg-slate-400',
+  sending: 'bg-sky-500 animate-pulse',
+  processing: 'bg-amber-500 animate-pulse',
+  completed: 'bg-emerald-500',
+  failed: 'bg-rose-500',
+  refunded: 'bg-purple-500',
+  cancelled: 'bg-slate-400',
+}
+
+const openUserOrdersModal = async (user: AdminUserListItem) => {
+  targetOrdersUser.value = user
+  isOrdersModalOpen.value = true
+  orderModalSearchQuery.value = ''
+  await refreshUserOrders()
+}
+
+const refreshUserOrders = async () => {
+  if (!targetOrdersUser.value) return
+  isLoadingUserOrders.value = true
+  try {
+    userOrdersList.value = await adminService.getUserOrders(targetOrdersUser.value.id)
+  } catch (err) {
+    console.warn('Lỗi tải danh sách đơn của user:', err)
+  } finally {
+    isLoadingUserOrders.value = false
+  }
+}
+
+const getOrderCode = (ord: Order) => {
+  const item = ord.items?.[0]
+  if (!item?.inputs) return ''
+  return item.inputs.code || item.inputs.accountId || ''
+}
+
+const copyCode = (code: string) => {
+  if (!code) return
+  navigator.clipboard.writeText(code)
+  showAlert(`Đã copy mã code: "${code}"`, 'success')
+}
+
+const filteredUserOrders = computed(() => {
+  if (!orderModalSearchQuery.value.trim()) return userOrdersList.value
+  const q = orderModalSearchQuery.value.trim().toLowerCase()
+  return userOrdersList.value.filter(ord => {
+    const code = getOrderCode(ord).toLowerCase()
+    const orderCode = ord.orderCode.toLowerCase()
+    const prodName = (ord.items?.[0]?.productName || '').toLowerCase()
+    return code.includes(q) || orderCode.includes(q) || prodName.includes(q)
+  })
+})
+
+const modalTotalCodes = computed(() => {
+  return userOrdersList.value.reduce((sum, ord) => sum + (ord.items?.[0]?.quantity || 1), 0)
+})
+
+const modalCompletedCodes = computed(() => {
+  return userOrdersList.value
+    .filter(ord => ord.status === 'completed')
+    .reduce((sum, ord) => sum + (ord.items?.[0]?.quantity || 1), 0)
+})
+
+const modalTotalSpent = computed(() => {
+  return userOrdersList.value
+    .filter(ord => ord.status === 'completed')
+    .reduce((sum, ord) => sum + (ord.finalAmount || 0), 0)
+})
 
 // Pagination
 const currentPage = ref(1)
