@@ -467,12 +467,20 @@ const clearSelection = () => {
 const getEventCode = (order: Order): string => {
   if (!order.items || order.items.length === 0) return ''
   for (const item of order.items) {
-    if (item.inputs) {
-      if (item.inputs.accountId) return String(item.inputs.accountId)
-      if (item.inputs.code) return String(item.inputs.code)
-      if (item.inputs.eventCode) return String(item.inputs.eventCode)
-      const firstVal = Object.values(item.inputs)[0]
-      if (firstVal) return String(firstVal)
+    let inp = item.inputs || (item as any).customerInput || (item as any).customer_input
+    if (typeof inp === 'string') {
+      try {
+        inp = JSON.parse(inp)
+      } catch {}
+    }
+    if (inp && typeof inp === 'object') {
+      if (inp.accountId) return String(inp.accountId)
+      if (inp.code) return String(inp.code)
+      if (inp.eventCode) return String(inp.eventCode)
+      const firstVal = Object.values(inp)[0]
+      if (firstVal && typeof firstVal !== 'object') return String(firstVal)
+    } else if (typeof inp === 'string' && inp) {
+      return inp
     }
   }
   return ''

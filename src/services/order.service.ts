@@ -42,18 +42,41 @@ export function mapBackendOrder(raw: any): Order {
 
   let items = []
   if (Array.isArray(raw.items)) {
-    items = raw.items.map((it: any) => ({
-      productId: it.productId ?? it.product_id,
-      productName: it.productName ?? it.product_name ?? 'Gói Dịch Vụ',
-      price: it.unitPrice ?? it.unit_price ?? it.price ?? 0,
-      quantity: it.quantity ?? 1,
-      inputs: it.customerInput ?? it.customer_input ?? it.inputs ?? {},
-    }))
+    items = raw.items.map((it: any) => {
+      let inputs = it.customerInput ?? it.customer_input ?? it.inputs ?? {}
+      if (typeof inputs === 'string') {
+        try {
+          inputs = JSON.parse(inputs)
+        } catch {
+          inputs = {}
+        }
+      }
+      return {
+        productId: it.productId ?? it.product_id,
+        productName: it.productName ?? it.product_name ?? 'Gói Dịch Vụ',
+        price: it.unitPrice ?? it.unit_price ?? it.price ?? 0,
+        quantity: it.quantity ?? 1,
+        inputs: inputs || {},
+      }
+    })
+  }
+
+  let user = raw.user
+  if (typeof user === 'string') {
+    try {
+      user = JSON.parse(user)
+    } catch {
+      user = null
+    }
+  }
+  if (!user && (raw.userEmail || raw.userName)) {
+    user = { id: raw.user_id || raw.userId, email: raw.userEmail, name: raw.userName }
   }
 
   return {
     id: raw.id,
     orderCode,
+    user,
     status: raw.status || 'queued',
     totalAmount: subtotalAmount,
     discountAmount,

@@ -608,8 +608,18 @@ const refreshUserOrders = async () => {
 
 const getOrderCode = (ord: Order) => {
   const item = ord.items?.[0]
-  if (!item?.inputs) return ''
-  return item.inputs.code || item.inputs.accountId || ''
+  if (!item) return ''
+  let inp = item.inputs || (item as any).customerInput || (item as any).customer_input
+  if (typeof inp === 'string') {
+    try {
+      inp = JSON.parse(inp)
+    } catch {}
+  }
+  if (inp && typeof inp === 'object') {
+    return inp.code || inp.accountId || inp.eventCode || Object.values(inp)[0] || ''
+  }
+  if (typeof inp === 'string') return inp
+  return ''
 }
 
 const copyCode = (code: string) => {
