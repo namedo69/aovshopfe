@@ -134,6 +134,7 @@ export type OrderStatus =
 export interface Order {
   id: string
   orderCode: string
+  user?: { id?: string; email?: string; name?: string } | null
   status: OrderStatus
   totalAmount: number
   discountAmount: number
