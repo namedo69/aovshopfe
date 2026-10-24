@@ -49,15 +49,6 @@
           ]"
         >
           {{ tab.label }}
-          <span
-            v-if="tab.count !== undefined"
-            :class="[
-              'ml-1 px-1.5 py-0.2 rounded-full text-[10px]',
-              currentStatusFilter === tab.value ? 'bg-sky-700 text-white' : 'bg-slate-200 text-slate-700'
-            ]"
-          >
-            {{ tab.count }}
-          </span>
         </button>
       </div>
     </div>
@@ -108,7 +99,7 @@
 
     <!-- Orders Table -->
     <div v-else class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-      <div v-if="filteredOrders.length === 0" class="p-12 text-center text-slate-400">
+      <div v-if="ordersList.length === 0" class="p-12 text-center text-slate-400">
         <ShoppingCart class="w-12 h-12 mx-auto mb-3 text-slate-300 stroke-[1.2]" />
         <p class="font-medium text-slate-600">Không tìm thấy đơn hàng nào phù hợp</p>
         <p class="text-xs text-slate-400 mt-1">Thử thay đổi bộ lọc trạng thái hoặc từ khóa tìm kiếm</p>
@@ -124,7 +115,7 @@
                 :checked="isAllSelected"
                 @change="toggleSelectAll"
                 class="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
-                title="Chọn tất cả đơn đang hiển thị"
+                :title="`Chọn tất cả ${ordersList.length} đơn trên trang này`"
               />
             </th>
             <th class="py-3.5 px-4 font-semibold">Mã Đơn</th>
@@ -138,7 +129,7 @@
         </thead>
         <tbody class="divide-y divide-slate-100 text-slate-700">
           <tr
-            v-for="order in paginatedOrders"
+            v-for="order in ordersList"
             :key="order.id"
             :class="[
               'transition',
@@ -215,12 +206,12 @@
         </tbody>
       </table>
 
-      <!-- Thanh Phân Trang Đơn Hàng -->
+      <!-- Thanh Phân Trang Đơn Hàng (server-side) -->
       <AdminPagination
-        v-if="filteredOrders.length > 0"
+        v-if="totalItems > 0"
         v-model:currentPage="currentPage"
         v-model:pageSize="pageSize"
-        :totalItems="filteredOrders.length"
+        :totalItems="totalItems"
       />
     </div>
 
@@ -350,7 +341,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { formatVND, formatDate, copyToClipboard } from '@/utils/format'
 import { ShoppingCart, RotateCcw, Loader2, Search, Copy, CheckSquare, CheckCircle } from 'lucide-vue-next'
 import AdminPagination from '@/components/common/AdminPagination.vue'
@@ -363,16 +354,21 @@ const isSubmitting = ref(false)
 const alertMessage = ref('')
 const alertType = ref<'success' | 'error'>('success')
 
-// Pagination
+// Server-side pagination
 const currentPage = ref(1)
 const pageSize = ref(20)
+const totalItems = ref(0)
+const totalPages = ref(0)
 
 // Selection (Checkbox hàng loạt)
 const selectedOrderIds = ref<string[]>([])
 
-// Filters
+// Filters (server-side)
 const searchQuery = ref('')
 const currentStatusFilter = ref<string>('all')
+
+// Debounce search
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
 // Single Modal state
 const isModalOpen = ref(false)
@@ -406,56 +402,34 @@ const statusStyles: Record<OrderStatus, string> = {
   cancelled: 'bg-slate-100 text-slate-600',
 }
 
+// Map filter tabs to server-side status params
+const statusFilterMap: Record<string, string | undefined> = {
+  all: undefined,
+  pending_group: 'queued,sending,processing',
+  completed: 'completed',
+  refunded_group: 'refunded,failed',
+}
+
 const filterTabs = computed(() => [
-  { label: 'Tất cả', value: 'all', count: ordersList.value.length },
-  { label: 'Chờ xử lý', value: 'pending_group', count: ordersList.value.filter(o => ['queued', 'sending', 'processing'].includes(o.status)).length },
-  { label: 'Hoàn thành', value: 'completed', count: ordersList.value.filter(o => o.status === 'completed').length },
-  { label: 'Đã hoàn tiền / Lỗi', value: 'refunded_group', count: ordersList.value.filter(o => ['refunded', 'failed'].includes(o.status)).length },
+  { label: 'Tất cả', value: 'all' },
+  { label: 'Chờ xử lý', value: 'pending_group' },
+  { label: 'Hoàn thành', value: 'completed' },
+  { label: 'Đã hoàn tiền / Lỗi', value: 'refunded_group' },
 ])
-
-const filteredOrders = computed(() => {
-  return ordersList.value.filter((order) => {
-    // 1. Lọc theo trạng thái
-    if (currentStatusFilter.value === 'pending_group') {
-      if (!['queued', 'sending', 'processing'].includes(order.status)) return false
-    } else if (currentStatusFilter.value === 'refunded_group') {
-      if (!['refunded', 'failed'].includes(order.status)) return false
-    } else if (currentStatusFilter.value !== 'all') {
-      if (order.status !== currentStatusFilter.value) return false
-    }
-
-    // 2. Tìm kiếm theo OrderCode, User ID hoặc Code Sự Kiện
-    if (searchQuery.value.trim()) {
-      const q = searchQuery.value.trim().toLowerCase()
-      const matchCode = order.orderCode?.toLowerCase().includes(q)
-      const matchId = order.id?.toLowerCase().includes(q)
-      const eventCode = getEventCode(order).toLowerCase()
-      const matchEventCode = eventCode.includes(q)
-      if (!matchCode && !matchId && !matchEventCode) return false
-    }
-
-    return true
-  })
-})
-
-const paginatedOrders = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  return filteredOrders.value.slice(start, start + pageSize.value)
-})
 
 // Quản lý checkbox Select All (theo trang hiện tại)
 const isAllSelected = computed(() => {
-  if (paginatedOrders.value.length === 0) return false
-  return paginatedOrders.value.every(o => selectedOrderIds.value.includes(o.id))
+  if (ordersList.value.length === 0) return false
+  return ordersList.value.every(o => selectedOrderIds.value.includes(o.id))
 })
 
 const toggleSelectAll = (e: Event) => {
   const checked = (e.target as HTMLInputElement).checked
   if (checked) {
-    const pageIds = paginatedOrders.value.map(o => o.id)
+    const pageIds = ordersList.value.map(o => o.id)
     selectedOrderIds.value = Array.from(new Set([...selectedOrderIds.value, ...pageIds]))
   } else {
-    const pageIds = paginatedOrders.value.map(o => o.id)
+    const pageIds = ordersList.value.map(o => o.id)
     selectedOrderIds.value = selectedOrderIds.value.filter(id => !pageIds.includes(id))
   }
 }
@@ -503,13 +477,49 @@ const showAlert = (msg: string, type: 'success' | 'error' = 'success') => {
 const loadOrders = async () => {
   isLoading.value = true
   try {
-    ordersList.value = await adminService.getOrders()
+    const params: Record<string, any> = {
+      page: currentPage.value,
+      limit: pageSize.value,
+    }
+    const statusParam = statusFilterMap[currentStatusFilter.value]
+    if (statusParam) params.status = statusParam
+    if (searchQuery.value.trim()) params.search = searchQuery.value.trim()
+
+    const result = await adminService.getOrders(params)
+    ordersList.value = result.data
+    totalItems.value = result.pagination.total
+    totalPages.value = result.pagination.totalPages
   } catch (err: any) {
     showAlert('Không thể tải danh sách đơn hàng: ' + (err.message || ''), 'error')
   } finally {
     isLoading.value = false
   }
 }
+
+// Khi đổi filter hoặc page size -> reset về trang 1 và load lại
+watch(currentStatusFilter, () => {
+  currentPage.value = 1
+  clearSelection()
+  loadOrders()
+})
+
+watch(pageSize, () => {
+  currentPage.value = 1
+  loadOrders()
+})
+
+watch(currentPage, () => {
+  loadOrders()
+})
+
+// Debounce search: đợi 400ms sau khi user ngừng gõ
+watch(searchQuery, () => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 1
+    loadOrders()
+  }, 400)
+})
 
 onMounted(() => {
   loadOrders()

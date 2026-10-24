@@ -146,13 +146,14 @@ export const adminService = {
     await apiClient.delete(`/admin/products/${id}`)
   },
 
-  // Quản lý đơn hàng
-  async getOrders(params?: any): Promise<Order[]> {
-    const res = await apiClient.get<any[]>('/admin/orders', { params })
-    if (Array.isArray(res.data)) {
-      return res.data.map(mapBackendOrder)
+  // Quản lý đơn hàng (phân trang server-side)
+  async getOrders(params?: { page?: number; limit?: number; status?: string; search?: string; userId?: string }): Promise<{ data: Order[]; pagination: { page: number; limit: number; total: number; totalPages: number } }> {
+    const res = await apiClient.get<any>('/admin/orders', { params })
+    const raw = res.data
+    return {
+      data: Array.isArray(raw.data) ? raw.data.map(mapBackendOrder) : [],
+      pagination: raw.pagination ?? { page: 1, limit: 20, total: 0, totalPages: 0 },
     }
-    return []
   },
 
   async getOrderById(id: string): Promise<Order> {
