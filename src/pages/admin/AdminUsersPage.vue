@@ -719,12 +719,24 @@ const showAlert = (msg: string, type: 'success' | 'error' = 'success') => {
 const loadUsers = async () => {
   isLoading.value = true
   try {
-    const [users, tiers] = await Promise.all([
+    const [usersResult, tiersResult] = await Promise.allSettled([
       adminService.getUsers(),
       adminService.getUserTiers(),
     ])
-    usersList.value = users
-    availableTiers.value = tiers
+
+    if (usersResult.status === 'fulfilled') {
+      usersList.value = Array.isArray(usersResult.value) ? usersResult.value : []
+    } else {
+      const errMsg = (usersResult.reason as any)?.response?.data?.error?.message
+        || (usersResult.reason as any)?.message || 'Lỗi không xác định'
+      showAlert('Không thể tải danh sách người dùng: ' + errMsg, 'error')
+    }
+
+    if (tiersResult.status === 'fulfilled') {
+      availableTiers.value = Array.isArray(tiersResult.value) ? tiersResult.value : []
+    } else {
+      console.warn('Lỗi tải danh sách loại tài khoản:', tiersResult.reason)
+    }
   } catch (err: any) {
     showAlert('Không thể tải danh sách người dùng: ' + (err.message || ''), 'error')
   } finally {

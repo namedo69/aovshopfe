@@ -47,8 +47,11 @@ export interface AdminUserListItem {
 export const adminService = {
   // Quản lý người dùng
   async getUsers(): Promise<AdminUserListItem[]> {
-    const res = await apiClient.get<AdminUserListItem[]>('/admin/users')
-    return res.data
+    const res = await apiClient.get<any>('/admin/users')
+    const raw = res.data
+    // Handle cả mảng trực tiếp lẫn response wrapped { data: [...] }
+    const list = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : []
+    return list
   },
 
   async updateUser(id: string, data: { status?: 'active' | 'blocked'; role?: 'customer' | 'admin'; tierId?: string; name?: string }): Promise<User> {
@@ -221,8 +224,10 @@ export const adminService = {
 
   // Quản lý Loại Người Dùng (User Tiers) & Cấu hình giá
   async getUserTiers(): Promise<UserTier[]> {
-    const res = await apiClient.get<UserTier[]>('/admin/tiers')
-    return res.data
+    const res = await apiClient.get<any>('/admin/tiers')
+    const raw = res.data
+    const list = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : []
+    return list
   },
 
   async createUserTier(data: Partial<UserTier>): Promise<UserTier> {
