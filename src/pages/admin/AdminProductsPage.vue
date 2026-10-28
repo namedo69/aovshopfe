@@ -39,7 +39,7 @@
           <tr>
             <th class="py-3 px-6 font-semibold">Tên Gói</th>
             <th class="py-3 px-6 font-semibold">Slug</th>
-            <th class="py-3 px-6 font-semibold text-center">Lượt API (Chung Sức)</th>
+            <th class="py-3 px-6 font-semibold text-center">Lượt API Tự Động</th>
             <th class="py-3 px-6 font-semibold">Giá Bán</th>
             <th class="py-3 px-6 font-semibold">Giá Gốc</th>
             <th class="py-3 px-6 font-semibold">Trạng Thái</th>
@@ -160,11 +160,11 @@
             </div>
           </div>
 
-          <!-- Cấu hình số request API gửi Chung Sức -->
+          <!-- Cấu hình số request API gửi tự động -->
           <div class="p-3.5 bg-sky-50/70 border border-sky-100 rounded-xl space-y-1.5">
             <div class="flex items-center justify-between">
               <label class="block text-xs font-bold text-sky-900">
-                ⚡ Số request API Chung Sức cho gói này *
+                ⚡ Số request API tự động cho gói này *
               </label>
               <span class="text-xs font-mono font-bold text-sky-700">
                 = {{ requestsPerItemInput * 38 }} vé

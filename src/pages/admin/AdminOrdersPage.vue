@@ -22,7 +22,7 @@
       <button @click="alertMessage = ''" class="font-bold ml-4">✕</button>
     </div>
 
-    <!-- Banner Cổng Đối Tác Chung Sức Home API (Bật/Tắt & Số dư chi tiết) -->
+    <!-- Banner Cổng Đối Tác API Tự Động (Bật/Tắt & Số dư chi tiết) -->
     <div class="bg-gradient-to-r from-slate-900 via-sky-950 to-indigo-950 rounded-2xl p-5 text-white shadow-lg border border-sky-800/40 space-y-4">
       <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div class="flex items-center gap-3.5">
@@ -31,7 +31,7 @@
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h2 class="font-bold text-base text-white tracking-wide">Cổng Tự Động: Chung Sức Home (chungsuc.io.vn)</h2>
+              <h2 class="font-bold text-base text-white tracking-wide">Cổng Đẩy Đơn Tự Động</h2>
               <span
                 :class="[
                   'px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider',
@@ -42,7 +42,7 @@
               </span>
             </div>
             <p class="text-xs text-sky-200/70 mt-0.5">
-              {{ csProvider?.isActive ? '⚡ Tự động lọc mã và đẩy đơn trực tiếp sang Chung Sức' : '⏸ Đơn mới sẽ lưu hàng đợi và chờ duyệt thủ công' }}
+              {{ csProvider?.isActive ? '⚡ Tự động lọc mã và đẩy đơn trực tiếp sang hệ thống API đối tác' : '⏸ Đơn mới sẽ lưu hàng đợi và chờ duyệt thủ công' }}
             </p>
           </div>
         </div>
@@ -52,7 +52,7 @@
           <button
             @click="loadChungSucStatus"
             :disabled="isLoadingCS"
-            title="Làm mới số dư ví Chung Sức"
+            title="Làm mới số dư ví đối tác"
             class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-slate-200 transition border border-white/10 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
             <RotateCcw :class="['w-3.5 h-3.5', isLoadingCS && 'animate-spin text-sky-400']" />
@@ -124,7 +124,7 @@
           <div :class="['font-bold text-sm mt-1.5', csPartnerInfo?.purchases_open ? 'text-emerald-400' : 'text-amber-400']">
             {{ csPartnerInfo?.purchases_open ? 'Sẵn sàng nhận đơn' : 'Đang tạm dừng / bảo trì' }}
           </div>
-          <span class="text-[10px] text-slate-400">{{ csPartnerInfo?.user?.email || 'ChungSuc Account' }}</span>
+          <span class="text-[10px] text-slate-400">{{ csPartnerInfo?.purchases_open ? 'Hệ thống hoạt động bình thường' : 'Tạm bảo trì' }}</span>
         </div>
       </div>
     </div>
@@ -228,7 +228,7 @@
             <th class="py-3.5 px-4 font-semibold">Mã Đơn</th>
             <th class="py-3.5 px-4 font-semibold">Gói Dịch Vụ</th>
             <th class="py-3.5 px-4 font-semibold">Code Sự Kiện</th>
-            <th class="py-3.5 px-4 font-semibold text-center">Tiến Độ Vé (Chung Sức)</th>
+            <th class="py-3.5 px-4 font-semibold text-center">Tiến Độ Vé Tự Động</th>
             <th class="py-3.5 px-4 font-semibold">Thanh Toán</th>
             <th class="py-3.5 px-4 font-semibold">Thời Gian</th>
             <th class="py-3.5 px-4 font-semibold">Trạng Thái</th>
