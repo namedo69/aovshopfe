@@ -39,6 +39,7 @@
           <tr>
             <th class="py-3 px-6 font-semibold">Tên Gói</th>
             <th class="py-3 px-6 font-semibold">Slug</th>
+            <th class="py-3 px-6 font-semibold text-center">Lượt API (Chung Sức)</th>
             <th class="py-3 px-6 font-semibold">Giá Bán</th>
             <th class="py-3 px-6 font-semibold">Giá Gốc</th>
             <th class="py-3 px-6 font-semibold">Trạng Thái</th>
@@ -52,6 +53,12 @@
               <span v-if="item.description" class="block text-xs text-slate-400 font-normal truncate max-w-xs">{{ item.description }}</span>
             </td>
             <td class="py-4 px-6 font-mono text-xs text-slate-500">{{ item.slug }}</td>
+            <td class="py-4 px-6 text-center">
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                ⚡ {{ item.requestsPerItem || 1 }} lượt
+                <span class="text-[10px] text-slate-400 font-normal">({{ (item.requestsPerItem || 1) * 38 }} vé)</span>
+              </span>
+            </td>
             <td class="py-4 px-6 font-semibold text-sky-600">{{ formatVND(item.price) }}</td>
             <td class="py-4 px-6 text-xs text-slate-400">
               {{ item.originalPrice > item.price ? formatVND(item.originalPrice) : '-' }}
@@ -153,6 +160,29 @@
             </div>
           </div>
 
+          <!-- Cấu hình số request API gửi Chung Sức -->
+          <div class="p-3.5 bg-sky-50/70 border border-sky-100 rounded-xl space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold text-sky-900">
+                ⚡ Số request API Chung Sức cho gói này *
+              </label>
+              <span class="text-xs font-mono font-bold text-sky-700">
+                = {{ requestsPerItemInput * 38 }} vé
+              </span>
+            </div>
+            <input
+              v-model.number="requestsPerItemInput"
+              type="number"
+              min="1"
+              max="100"
+              required
+              class="w-full px-3.5 py-2 rounded-xl border border-sky-200 bg-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-sm outline-none font-bold text-slate-800"
+            />
+            <p class="text-[11px] text-slate-500">
+              Mặc định là <strong>1</strong> (tương đương 38 vé). Nếu là gói 304 vé, nhập là <strong>8</strong>.
+            </p>
+          </div>
+
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">Mô tả gói</label>
             <textarea
@@ -209,6 +239,7 @@ const isSubmitting = ref(false)
 const isModalOpen = ref(false)
 const isEditing = ref(false)
 const currentEditId = ref<string | null>(null)
+const requestsPerItemInput = ref<number>(1)
 
 const alertMessage = ref('')
 const alertType = ref<'success' | 'error'>('success')
@@ -263,6 +294,7 @@ const onNameChange = () => {
 const openCreateModal = () => {
   isEditing.value = false
   currentEditId.value = null
+  requestsPerItemInput.value = 1
   form.value = {
     name: '',
     slug: '',
@@ -271,7 +303,8 @@ const openCreateModal = () => {
     salePriceAmount: 90000,
     isActive: true,
     inputSchema: {
-      accountId: { label: 'Code Sự kiện', type: 'text', required: true }
+      accountId: { label: 'Code Sự kiện', type: 'text', required: true },
+      requestsPerItem: 1,
     }
   }
   isModalOpen.value = true
@@ -280,6 +313,7 @@ const openCreateModal = () => {
 const openEditModal = (item: Product) => {
   isEditing.value = true
   currentEditId.value = item.id
+  requestsPerItemInput.value = item.requestsPerItem || 1
   form.value = {
     name: item.name,
     slug: item.slug,
@@ -287,6 +321,10 @@ const openEditModal = (item: Product) => {
     priceAmount: item.originalPrice,
     salePriceAmount: item.price,
     isActive: item.status === 'active',
+    inputSchema: {
+      accountId: { label: 'Code Sự kiện', type: 'text', required: true },
+      requestsPerItem: requestsPerItemInput.value,
+    }
   }
   isModalOpen.value = true
 }
@@ -295,6 +333,13 @@ const handleSaveProduct = async () => {
   if (form.value.salePriceAmount && form.value.priceAmount && form.value.salePriceAmount > form.value.priceAmount) {
     showAlert('Giá bán (khuyến mãi) không được cao hơn giá gốc!', 'error')
     return
+  }
+
+  // Đóng gói requestsPerItem vào inputSchema
+  form.value.inputSchema = {
+    ...(form.value.inputSchema || {}),
+    accountId: { label: 'Code Sự kiện', type: 'text', required: true },
+    requestsPerItem: Math.max(1, Math.floor(requestsPerItemInput.value || 1)),
   }
 
   isSubmitting.value = true

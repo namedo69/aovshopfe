@@ -253,4 +253,15 @@ export const adminService = {
     const res = await apiClient.post(`/admin/tiers/${tierId}/prices`, { productId, customPriceAmount })
     return res.data
   },
+
+  // Quản lý Đối Tác Chung Sức (ChungSuc Home API)
+  async getChungSucProvider(): Promise<any> {
+    const res = await apiClient.get<any>('/admin/providers/chungsuc')
+    return res.data
+  },
+
+  async toggleChungSucProvider(isActive?: boolean): Promise<any> {
+    const res = await apiClient.patch<any>('/admin/providers/chungsuc/toggle', { isActive })
+    return res.data
+  },
 }

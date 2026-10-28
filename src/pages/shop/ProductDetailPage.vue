@@ -445,17 +445,33 @@
                       x{{ ord.items?.[0]?.quantity || 1 }}
                     </td>
 
-                    <!-- Trạng Thái Tiến Độ -->
+                    <!-- Trạng Thái & Tiến Độ Vé -->
                     <td class="py-2.5 px-3 text-right">
-                      <span
-                        :class="[
-                          'px-2 py-0.5 rounded-full text-[10px] font-semibold inline-flex items-center gap-1',
-                          statusStyles[ord.status] || 'bg-slate-100 text-slate-600'
-                        ]"
-                      >
-                        <span :class="['w-1.5 h-1.5 rounded-full', statusDots[ord.status] || 'bg-slate-400']"></span>
-                        {{ statusLabels[ord.status] || ord.status }}
-                      </span>
+                      <div class="flex flex-col items-end gap-1">
+                        <span
+                          :class="[
+                            'px-2 py-0.5 rounded-full text-[10px] font-semibold inline-flex items-center gap-1',
+                            statusStyles[ord.status] || 'bg-slate-100 text-slate-600'
+                          ]"
+                        >
+                          <span :class="['w-1.5 h-1.5 rounded-full', statusDots[ord.status] || 'bg-slate-400']"></span>
+                          {{ statusLabels[ord.status] || ord.status }}
+                        </span>
+
+                        <!-- Thanh % vé nếu có thông tin tiến độ -->
+                        <div v-if="ord.ticketsTarget && ord.ticketsTarget > 0" class="w-24 text-right">
+                          <div class="flex justify-between text-[9px] text-slate-400 font-mono">
+                            <span>{{ ord.ticketsConfirmed || 0 }}/{{ ord.ticketsTarget }} vé</span>
+                            <span>{{ Math.min(100, Math.round(((ord.ticketsConfirmed || 0) / ord.ticketsTarget) * 100)) }}%</span>
+                          </div>
+                          <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-0.5">
+                            <div
+                              class="h-full bg-sky-500 rounded-full transition-all duration-300"
+                              :style="{ width: `${Math.min(100, Math.round(((ord.ticketsConfirmed || 0) / ord.ticketsTarget) * 100))}%` }"
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 </tbody>

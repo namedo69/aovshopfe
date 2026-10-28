@@ -73,6 +73,12 @@ export function mapBackendOrder(raw: any): Order {
     user = { id: raw.user_id || raw.userId, email: raw.userEmail, name: raw.userName }
   }
 
+  const prov = raw.providerOrder || raw.provider_order || null
+  const respPayload = prov?.response || {}
+  const ticketsTarget = respPayload.tickets_target || 0
+  const ticketsConfirmed = respPayload.tickets_confirmed || 0
+  const completedRequests = respPayload.completed_requests || 0
+
   return {
     id: raw.id,
     orderCode,
@@ -84,6 +90,11 @@ export function mapBackendOrder(raw: any): Order {
     voucherCode: raw.voucherCode || raw.voucher_code,
     items,
     customerNote: raw.customerNote || raw.customer_note,
+    ticketsTarget,
+    ticketsConfirmed,
+    completedRequests,
+    progressPercent: ticketsTarget > 0 ? Math.min(100, Math.round((ticketsConfirmed / ticketsTarget) * 100)) : (raw.status === 'completed' ? 100 : 0),
+    providerOrder: prov,
     createdAt: raw.createdAt || raw.created_at || new Date().toISOString(),
     updatedAt: raw.updatedAt || raw.updated_at || new Date().toISOString(),
   }
@@ -168,5 +179,18 @@ export const orderService = {
   async getOrderByCode(orderCode: string): Promise<Order> {
     const res = await apiClient.get<any>(`/orders/${orderCode}`)
     return mapBackendOrder(res.data)
+  },
+
+  // Lấy tiến độ vé thời gian thực (Polling 5s)
+  async getOrderProgress(orderCode: string): Promise<{
+    orderCode: string
+    status: any
+    ticketsTarget: number
+    ticketsConfirmed: number
+    completedRequests: number
+    progressPercent: number
+  }> {
+    const res = await apiClient.get<any>(`/orders/${orderCode}/progress`)
+    return res.data
   },
 }

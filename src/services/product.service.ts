@@ -61,6 +61,9 @@ export function mapBackendProduct(raw: BackendProduct | Product): Product {
     ]
   }
 
+  const rawSchemaObj = (b.inputSchema && typeof b.inputSchema === 'object' && !Array.isArray(b.inputSchema)) ? b.inputSchema : {}
+  const requestsPerItem = Number(rawSchemaObj.requestsPerItem || rawSchemaObj.providerQuantity) || 1
+
   return {
     id: b.id,
     name: b.name,
@@ -70,6 +73,7 @@ export function mapBackendProduct(raw: BackendProduct | Product): Product {
     originalPrice,
     price,
     status: b.isActive ? 'active' : 'inactive',
+    requestsPerItem,
     inputSchema: inputSchemaList,
     imageUrl: b.imageUrl,
     minQuantity: b.minQuantity,

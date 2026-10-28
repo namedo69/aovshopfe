@@ -98,6 +98,25 @@
             <span class="text-xs font-semibold text-slate-800 mt-2">Hoàn Thành</span>
           </div>
         </div>
+
+        <!-- Tiến độ vé xác nhận thực tế (Chung Sức Home API) -->
+        <div v-if="order.ticketsTarget && order.ticketsTarget > 0" class="mt-6 pt-5 border-t border-slate-100 space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-500 font-medium">Tiến độ vé xác nhận trong nick:</span>
+            <span class="font-mono font-bold text-sky-700">
+              {{ order.ticketsConfirmed || 0 }} / {{ order.ticketsTarget }} vé ({{ Math.min(100, Math.round(((order.ticketsConfirmed || 0) / order.ticketsTarget) * 100)) }}%)
+            </span>
+          </div>
+          <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+            <div
+              class="h-full bg-gradient-to-r from-sky-500 to-emerald-500 rounded-full transition-all duration-500"
+              :style="{ width: `${Math.min(100, Math.round(((order.ticketsConfirmed || 0) / order.ticketsTarget) * 100))}%` }"
+            ></div>
+          </div>
+          <p class="text-[11px] text-slate-400">
+            Hệ thống tự động theo dõi và cập nhật trực tiếp mỗi 5 giây cho đến khi đủ vé.
+          </p>
+        </div>
       </div>
 
       <!-- Details Card -->
@@ -147,7 +166,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { formatVND, formatDate } from '@/utils/format'
 import { ArrowLeft, Check, Loader2 } from 'lucide-vue-next'
@@ -187,14 +206,45 @@ const progressPercent = computed(() => {
   return 15
 })
 
+let liveTimer: any = null
+
+const pollLiveProgress = async () => {
+  if (!order.value || ['completed', 'cancelled', 'refunded', 'failed'].includes(order.value.status)) {
+    if (liveTimer) clearInterval(liveTimer)
+    return
+  }
+  try {
+    const live = await orderService.getOrderProgress(orderCode)
+    if (order.value) {
+      order.value.status = live.status
+      order.value.ticketsTarget = live.ticketsTarget
+      order.value.ticketsConfirmed = live.ticketsConfirmed
+      order.value.completedRequests = live.completedRequests
+    }
+    if (['completed', 'cancelled', 'refunded', 'failed'].includes(live.status)) {
+      if (liveTimer) clearInterval(liveTimer)
+    }
+  } catch {
+    // Bỏ qua lỗi polling tạm thời
+  }
+}
+
 onMounted(async () => {
   isLoading.value = true
   try {
     order.value = await orderService.getOrderByCode(orderCode)
+    // Nếu đơn đang chạy, bắt đầu Polling 5s
+    if (order.value && ['queued', 'sending', 'processing'].includes(order.value.status)) {
+      liveTimer = setInterval(pollLiveProgress, 5000)
+    }
   } catch (err) {
     console.warn('API error loading order detail:', err)
   } finally {
     isLoading.value = false
   }
+})
+
+onUnmounted(() => {
+  if (liveTimer) clearInterval(liveTimer)
 })
 </script>

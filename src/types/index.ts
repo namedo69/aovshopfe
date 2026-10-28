@@ -93,6 +93,7 @@ export interface Product {
   price: number
   status: 'active' | 'inactive'
   providerServiceId?: string
+  requestsPerItem?: number
   inputSchema: InputFieldSchema[]
   imageUrl?: string | null
   minQuantity?: number
@@ -142,8 +143,52 @@ export interface Order {
   voucherCode?: string
   items: OrderItem[]
   customerNote?: string
+  ticketsTarget?: number
+  ticketsConfirmed?: number
+  completedRequests?: number
+  progressPercent?: number
+  providerOrder?: {
+    externalOrderId?: string
+    status?: string
+    response?: any
+  } | null
   createdAt: string
   updatedAt: string
+}
+
+export interface ChungSucProviderInfo {
+  provider: {
+    id: string
+    code: string
+    name: string
+    isActive: boolean
+  }
+  configured: boolean
+  partnerInfo?: {
+    user?: {
+      id: number
+      email: string
+      balance: number
+    }
+    permissions?: {
+      home: boolean
+    }
+    prices?: {
+      home_per_request: number
+    }
+    tickets_per_request?: number
+    purchases_open?: boolean
+  } | null
+  error?: string | null
+}
+
+export interface OrderLiveProgress {
+  orderCode: string
+  status: OrderStatus
+  ticketsTarget: number
+  ticketsConfirmed: number
+  completedRequests: number
+  progressPercent: number
 }
 
 export interface Voucher {

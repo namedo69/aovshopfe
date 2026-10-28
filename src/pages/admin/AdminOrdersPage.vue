@@ -22,6 +22,113 @@
       <button @click="alertMessage = ''" class="font-bold ml-4">✕</button>
     </div>
 
+    <!-- Banner Cổng Đối Tác Chung Sức Home API (Bật/Tắt & Số dư chi tiết) -->
+    <div class="bg-gradient-to-r from-slate-900 via-sky-950 to-indigo-950 rounded-2xl p-5 text-white shadow-lg border border-sky-800/40 space-y-4">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center shrink-0 shadow-inner">
+            <Zap class="w-6 h-6 text-sky-400" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="font-bold text-base text-white tracking-wide">Cổng Tự Động: Chung Sức Home (chungsuc.io.vn)</h2>
+              <span
+                :class="[
+                  'px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider',
+                  csProvider?.isActive ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-700 text-slate-300 border border-slate-600'
+                ]"
+              >
+                {{ csProvider?.isActive ? 'ĐANG BẬT' : 'ĐANG TẮT' }}
+              </span>
+            </div>
+            <p class="text-xs text-sky-200/70 mt-0.5">
+              {{ csProvider?.isActive ? '⚡ Tự động lọc mã và đẩy đơn trực tiếp sang Chung Sức' : '⏸ Đơn mới sẽ lưu hàng đợi và chờ duyệt thủ công' }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Các nút thao tác nhanh -->
+        <div class="flex items-center gap-2.5 w-full md:w-auto justify-end">
+          <button
+            @click="loadChungSucStatus"
+            :disabled="isLoadingCS"
+            title="Làm mới số dư ví Chung Sức"
+            class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-slate-200 transition border border-white/10 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+          >
+            <RotateCcw :class="['w-3.5 h-3.5', isLoadingCS && 'animate-spin text-sky-400']" />
+            <span>Làm mới ví</span>
+          </button>
+
+          <button
+            @click="toggleChungSuc"
+            :disabled="isTogglingCS"
+            :class="[
+              'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm cursor-pointer disabled:opacity-50',
+              csProvider?.isActive
+                ? 'bg-rose-600 hover:bg-rose-500 text-white'
+                : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+            ]"
+          >
+            <Loader2 v-if="isTogglingCS" class="w-3.5 h-3.5 animate-spin" />
+            <Power v-else class="w-3.5 h-3.5" />
+            <span>{{ csProvider?.isActive ? 'Gạt TẮT Cổng' : 'Gạt BẬT Cổng' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Thống kê thông số ví đối tác API (Cards) -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-sky-800/40">
+        <!-- Số dư ví Xu -->
+        <div class="bg-black/30 border border-sky-500/20 rounded-xl p-3">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400 text-[11px] font-semibold uppercase tracking-wider">Số Dư Ví API</span>
+            <Coins class="w-4 h-4 text-amber-400" />
+          </div>
+          <div class="font-mono font-extrabold text-lg text-emerald-400 mt-1">
+            {{ csPartnerInfo?.user?.balance !== undefined ? formatVND(csPartnerInfo.user.balance).replace('₫', 'Xu') : '0 Xu' }}
+          </div>
+          <span class="text-[10px] text-slate-400">Trừ trực tiếp khi tạo đơn</span>
+        </div>
+
+        <!-- Giá vốn mỗi request -->
+        <div class="bg-black/30 border border-sky-500/20 rounded-xl p-3">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400 text-[11px] font-semibold uppercase tracking-wider">Giá Vốn API</span>
+            <Tag class="w-4 h-4 text-sky-400" />
+          </div>
+          <div class="font-mono font-extrabold text-lg text-sky-300 mt-1">
+            {{ csPartnerInfo?.prices?.home_per_request !== undefined ? `${csPartnerInfo.prices.home_per_request} Xu` : '250 Xu' }}
+          </div>
+          <span class="text-[10px] text-slate-400">1 lượt (tương đương 38 vé)</span>
+        </div>
+
+        <!-- Khả dụng tạo đơn -->
+        <div class="bg-black/30 border border-sky-500/20 rounded-xl p-3">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400 text-[11px] font-semibold uppercase tracking-wider">Tạo Đơn Tối Đa</span>
+            <Activity class="w-4 h-4 text-indigo-400" />
+          </div>
+          <div class="font-mono font-extrabold text-lg text-indigo-300 mt-1">
+            {{ csPartnerInfo?.user?.balance && csPartnerInfo?.prices?.home_per_request ? Math.floor(csPartnerInfo.user.balance / csPartnerInfo.prices.home_per_request) : 0 }} lượt
+          </div>
+          <span class="text-[10px] text-slate-400">Ước tính theo số dư hiện tại</span>
+        </div>
+
+        <!-- Trạng thái cổng mua từ đối tác -->
+        <div class="bg-black/30 border border-sky-500/20 rounded-xl p-3">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400 text-[11px] font-semibold uppercase tracking-wider">Hệ Thống Đối Tác</span>
+            <CheckCircle2 v-if="csPartnerInfo?.purchases_open" class="w-4 h-4 text-emerald-400" />
+            <AlertTriangle v-else class="w-4 h-4 text-amber-400" />
+          </div>
+          <div :class="['font-bold text-sm mt-1.5', csPartnerInfo?.purchases_open ? 'text-emerald-400' : 'text-amber-400']">
+            {{ csPartnerInfo?.purchases_open ? 'Sẵn sàng nhận đơn' : 'Đang tạm dừng / bảo trì' }}
+          </div>
+          <span class="text-[10px] text-slate-400">{{ csPartnerInfo?.user?.email || 'ChungSuc Account' }}</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Thanh Tìm Kiếm & Bộ Lọc Trạng Thái -->
     <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
       <!-- Search Input -->
@@ -343,7 +450,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { formatVND, formatDate, copyToClipboard } from '@/utils/format'
-import { ShoppingCart, RotateCcw, Loader2, Search, Copy, CheckSquare, CheckCircle } from 'lucide-vue-next'
+import { ShoppingCart, RotateCcw, Loader2, Search, Copy, CheckSquare, CheckCircle, Zap, Power, Coins, Tag, Activity, CheckCircle2, AlertTriangle } from 'lucide-vue-next'
 import AdminPagination from '@/components/common/AdminPagination.vue'
 import { adminService } from '@/services/admin.service'
 import type { Order, OrderStatus } from '@/types'
@@ -521,8 +628,43 @@ watch(searchQuery, () => {
   }, 400)
 })
 
+// ChungSuc Provider State
+const csProvider = ref<any>(null)
+const csPartnerInfo = ref<any>(null)
+const isTogglingCS = ref(false)
+const isLoadingCS = ref(false)
+
+const loadChungSucStatus = async () => {
+  isLoadingCS.value = true
+  try {
+    const data = await adminService.getChungSucProvider()
+    csProvider.value = data.provider
+    csPartnerInfo.value = data.partnerInfo
+  } catch (err) {
+    console.warn('Lỗi lấy thông tin ChungSuc:', err)
+  } finally {
+    isLoadingCS.value = false
+  }
+}
+
+const toggleChungSuc = async () => {
+  isTogglingCS.value = true
+  try {
+    const res = await adminService.toggleChungSucProvider()
+    csProvider.value = res.provider
+    showAlert(res.message, 'success')
+    // Cập nhật lại số dư ví nếu vừa bật
+    loadChungSucStatus()
+  } catch (err: any) {
+    showAlert('Không thể đổi trạng thái cổng Chung Sức: ' + (err.message || ''), 'error')
+  } finally {
+    isTogglingCS.value = false
+  }
+}
+
 onMounted(() => {
   loadOrders()
+  loadChungSucStatus()
 })
 
 const openStatusModal = (order: Order, status: string) => {
