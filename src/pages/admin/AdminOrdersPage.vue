@@ -228,6 +228,7 @@
             <th class="py-3.5 px-4 font-semibold">Mã Đơn</th>
             <th class="py-3.5 px-4 font-semibold">Gói Dịch Vụ</th>
             <th class="py-3.5 px-4 font-semibold">Code Sự Kiện</th>
+            <th class="py-3.5 px-4 font-semibold text-center">Tiến Độ Vé (Chung Sức)</th>
             <th class="py-3.5 px-4 font-semibold">Thanh Toán</th>
             <th class="py-3.5 px-4 font-semibold">Thời Gian</th>
             <th class="py-3.5 px-4 font-semibold">Trạng Thái</th>
@@ -272,6 +273,30 @@
                 </button>
               </div>
               <span v-else class="text-xs text-slate-400 italic">Không có code</span>
+            </td>
+            <!-- Cột Tiến Độ Vé Thời Gian Thực -->
+            <td class="py-4 px-4 text-center">
+              <div v-if="order.ticketsTarget && order.ticketsTarget > 0" class="min-w-[120px] max-w-[150px] mx-auto text-left">
+                <div class="flex items-center justify-between text-[11px] font-mono mb-1">
+                  <span class="font-bold text-sky-700">{{ order.ticketsConfirmed || 0 }}/{{ order.ticketsTarget }} vé</span>
+                  <span class="font-semibold text-slate-500">{{ Math.min(100, Math.round(((order.ticketsConfirmed || 0) / order.ticketsTarget) * 100)) }}%</span>
+                </div>
+                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
+                  <div
+                    :class="[
+                      'h-full rounded-full transition-all duration-300',
+                      order.status === 'completed' ? 'bg-emerald-500' : 'bg-gradient-to-r from-sky-500 to-indigo-600'
+                    ]"
+                    :style="{ width: `${Math.min(100, Math.round(((order.ticketsConfirmed || 0) / order.ticketsTarget) * 100))}%` }"
+                  ></div>
+                </div>
+              </div>
+              <span v-else-if="order.status === 'completed'" class="text-xs text-emerald-600 font-semibold">
+                ✓ 100%
+              </span>
+              <span v-else class="text-xs text-slate-400">
+                —
+              </span>
             </td>
             <td class="py-4 px-4 font-bold text-sky-600">
               {{ formatVND(order.finalAmount) }}
@@ -448,7 +473,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { formatVND, formatDate, copyToClipboard } from '@/utils/format'
 import { ShoppingCart, RotateCcw, Loader2, Search, Copy, CheckSquare, CheckCircle, Zap, Power, Coins, Tag, Activity, CheckCircle2, AlertTriangle } from 'lucide-vue-next'
 import AdminPagination from '@/components/common/AdminPagination.vue'
@@ -662,9 +687,23 @@ const toggleChungSuc = async () => {
   }
 }
 
+let adminOrdersPollTimer: any = null
+
 onMounted(() => {
   loadOrders()
   loadChungSucStatus()
+
+  // Polling tự động làm mới tiến độ mỗi 5 giây nếu có đơn đang chạy
+  adminOrdersPollTimer = setInterval(() => {
+    const hasRunning = ordersList.value.some(o => ['queued', 'sending', 'processing'].includes(o.status))
+    if (hasRunning && !isLoading.value && !isSubmitting.value) {
+      loadOrders()
+    }
+  }, 5000)
+})
+
+onUnmounted(() => {
+  if (adminOrdersPollTimer) clearInterval(adminOrdersPollTimer)
 })
 
 const openStatusModal = (order: Order, status: string) => {

@@ -174,12 +174,11 @@
               v-model.number="requestsPerItemInput"
               type="number"
               min="1"
-              max="100"
               required
               class="w-full px-3.5 py-2 rounded-xl border border-sky-200 bg-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-sm outline-none font-bold text-slate-800"
             />
             <p class="text-[11px] text-slate-500">
-              Mặc định là <strong>1</strong> (tương đương 38 vé). Nếu là gói 304 vé, nhập là <strong>8</strong>.
+              Không giới hạn số lượt (Mặc định là <strong>1</strong> = 38 vé. Nhập <strong>8</strong> = 304 vé, <strong>16</strong> = 608 vé...).
             </p>
           </div>
 

@@ -74,10 +74,10 @@ export function mapBackendOrder(raw: any): Order {
   }
 
   const prov = raw.providerOrder || raw.provider_order || null
-  const respPayload = prov?.response || {}
-  const ticketsTarget = respPayload.tickets_target || 0
-  const ticketsConfirmed = respPayload.tickets_confirmed || 0
-  const completedRequests = respPayload.completed_requests || 0
+  const respPayload = prov?.response || raw.provider_response || raw.providerResponse || {}
+  const ticketsTarget = respPayload.tickets_target || raw.ticketsTarget || 0
+  const ticketsConfirmed = respPayload.tickets_confirmed || raw.ticketsConfirmed || 0
+  const completedRequests = respPayload.completed_requests || raw.completedRequests || 0
 
   return {
     id: raw.id,
