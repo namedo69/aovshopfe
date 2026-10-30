@@ -140,6 +140,8 @@ const loadFeaturedProducts = async () => {
   try {
     // Gọi API từ Backend lấy danh sách gói
     const list = await productService.getProducts()
+    // Sắp xếp theo giá gói từ nhỏ đến lớn
+    list.sort((a, b) => a.price - b.price)
     // Hiển thị trực tiếp danh sách gói lấy từ Database
     featuredProducts.value = list.slice(0, 6)
   } catch (err) {

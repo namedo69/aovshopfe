@@ -849,6 +849,8 @@ onMounted(async () => {
   try {
     // 1. Tải toàn bộ danh sách sản phẩm
     const prods = await productService.getProducts()
+    // Sắp xếp theo giá gói từ nhỏ đến lớn
+    prods.sort((a, b) => a.price - b.price)
     allProducts.value = prods
 
     // 2. Tìm sản phẩm hiện tại theo slug từ router params

@@ -90,6 +90,8 @@ const loadProducts = async () => {
   isLoading.value = true
   try {
     const data = await productService.getProducts()
+    // Sắp xếp theo giá gói từ nhỏ đến lớn
+    data.sort((a, b) => a.price - b.price)
     products.value = data
   } catch (err) {
     console.warn('API error loading products:', err)
