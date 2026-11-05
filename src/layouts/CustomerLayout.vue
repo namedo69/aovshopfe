@@ -24,7 +24,7 @@
             Gói dịch vụ
           </router-link>
           <router-link to="/group-chest" class="text-slate-600 hover:text-sky-600 font-medium transition-colors flex items-center gap-1" active-class="text-sky-600 font-semibold">
-            <span>🐉 Mở rương nhóm</span>
+            <span>🐉 Mở rương</span>
           </router-link>
           <router-link v-if="authStore.isAuthenticated" to="/orders" class="text-slate-600 hover:text-sky-600 font-medium transition-colors" active-class="text-sky-600 font-semibold">
             Đơn hàng

@@ -55,7 +55,7 @@
             <td class="py-4 px-6 font-mono text-xs text-slate-500">{{ item.slug }}</td>
             <td class="py-4 px-6 text-center">
               <span v-if="item.productType === 'group_chest_open'" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                🐉 Mở rương nhóm
+                🐉 Mở rương
               </span>
               <span v-else class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
                 ⚡ {{ item.requestsPerItem || 1 }} lượt
@@ -142,8 +142,7 @@
               <input
                 v-model.number="form.salePriceAmount"
                 type="number"
-                min="0"
-                step="1000"
+                step="any"
                 required
                 placeholder="VD: 99000"
                 class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-sm outline-none"
@@ -154,8 +153,7 @@
               <input
                 v-model.number="form.priceAmount"
                 type="number"
-                min="0"
-                step="1000"
+                step="any"
                 required
                 placeholder="VD: 120000"
                 class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-sm outline-none"
@@ -172,7 +170,7 @@
               </label>
               <label :class="['flex items-center gap-2 p-3 rounded-xl border cursor-pointer text-xs font-bold transition', selectedProductType === 'group_chest_open' ? 'bg-purple-50 border-purple-400 text-purple-800' : 'bg-slate-50 border-slate-200 text-slate-600']">
                 <input type="radio" value="group_chest_open" v-model="selectedProductType" class="hidden" />
-                <span>🐉 Mở Rương Nhóm (Tool PC)</span>
+                <span>🐉 Mở Rương (Tool PC)</span>
               </label>
             </div>
           </div>
@@ -199,11 +197,11 @@
             </p>
           </div>
 
-          <!-- Thông tin cho Mở rương nhóm -->
+          <!-- Thông tin cho Mở rương -->
           <div v-else class="p-3.5 bg-purple-50/70 border border-purple-100 rounded-xl space-y-1.5">
             <div class="flex items-center justify-between">
               <label class="block text-xs font-bold text-purple-900">
-                🐉 Mở rương nhóm tự động qua Tool PC
+                🐉 Mở rương tự động qua Tool PC
               </label>
             </div>
             <p class="text-[11px] text-slate-600">
@@ -360,11 +358,6 @@ const openEditModal = (item: Product) => {
 }
 
 const handleSaveProduct = async () => {
-  if (form.value.salePriceAmount && form.value.priceAmount && form.value.salePriceAmount > form.value.priceAmount) {
-    showAlert('Giá bán (khuyến mãi) không được cao hơn giá gốc!', 'error')
-    return
-  }
-
   if (selectedProductType.value === 'group_chest_open') {
     form.value.inputSchema = {
       productType: 'group_chest_open',

@@ -1,8 +1,8 @@
 <template>
   <div class="max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-6">
     <div>
-      <p class="text-xs uppercase tracking-wider text-sky-600 font-bold">Sản phẩm nhóm</p>
-      <h1 class="text-3xl font-black text-slate-900">Mở rương nhóm</h1>
+      <p class="text-xs uppercase tracking-wider text-sky-600 font-bold">Dịch vụ mở rương</p>
+      <h1 class="text-3xl font-black text-slate-900 flex items-center gap-2"><span>🐉</span> Mở rương</h1>
       <p class="text-sm text-slate-500 mt-2">Nhập danh sách tài khoản cần mở rương. Đơn hàng sẽ tự động được gửi về tool PC để mở rương.</p>
     </div>
 
@@ -17,7 +17,7 @@
       <section class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
         <label class="block text-sm font-bold text-slate-800">Sản phẩm</label>
         <select v-model="productId" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
-          <option value="" disabled>Chọn sản phẩm Mở rương nhóm</option>
+          <option value="" disabled>Chọn gói Mở rương</option>
           <option v-for="product in groupProducts" :key="product.id" :value="product.id">{{ product.name }} — {{ formatVND(product.price) }}</option>
         </select>
 
@@ -34,7 +34,7 @@
         <div class="flex justify-between text-sm"><span>Đơn giá</span><b>{{ formatVND(selectedProduct?.price || 0) }}</b></div>
         <div class="border-t pt-3 flex justify-between font-black"><span>Tạm tính</span><span class="text-sky-600">{{ formatVND(total) }}</span></div>
         <button @click="submit" :disabled="submitting || !productId || !parsedAccounts.length" class="w-full rounded-xl bg-sky-600 hover:bg-sky-700 text-white py-3 font-bold disabled:opacity-50">
-          {{ submitting ? 'Đang tạo đơn...' : 'Tạo đơn Mở rương nhóm' }}
+          {{ submitting ? 'Đang tạo đơn...' : 'Tạo đơn Mở rương' }}
         </button>
         <p v-if="message" class="text-sm text-emerald-600">{{ message }}</p>
         <p v-if="error" class="text-sm text-rose-600">{{ error }}</p>

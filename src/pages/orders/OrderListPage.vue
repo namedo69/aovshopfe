@@ -16,6 +16,33 @@
       </button>
     </div>
 
+    <!-- Tabs: Tất cả đơn, Mở rương, Chung Sức -->
+    <div class="flex items-center gap-2 border-b border-slate-200 mb-6 overflow-x-auto">
+      <button
+        @click="activeTab = 'all'"
+        :class="['px-4 py-2.5 text-sm font-semibold border-b-2 transition -mb-px flex items-center gap-1.5 whitespace-nowrap cursor-pointer', activeTab === 'all' ? 'border-sky-600 text-sky-600' : 'border-transparent text-slate-500 hover:text-slate-800']"
+      >
+        <span>Tất cả đơn</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-mono">{{ orders.length }}</span>
+      </button>
+
+      <button
+        @click="activeTab = 'group_chest'"
+        :class="['px-4 py-2.5 text-sm font-semibold border-b-2 transition -mb-px flex items-center gap-1.5 whitespace-nowrap cursor-pointer', activeTab === 'group_chest' ? 'border-purple-600 text-purple-600' : 'border-transparent text-slate-500 hover:text-slate-800']"
+      >
+        <span>🐉 Đơn Mở rương</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-mono">{{ groupChestCount }}</span>
+      </button>
+
+      <button
+        @click="activeTab = 'chungsuc'"
+        :class="['px-4 py-2.5 text-sm font-semibold border-b-2 transition -mb-px flex items-center gap-1.5 whitespace-nowrap cursor-pointer', activeTab === 'chungsuc' ? 'border-sky-600 text-sky-600' : 'border-transparent text-slate-500 hover:text-slate-800']"
+      >
+        <span>⚡ Đơn Chung Sức</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 font-mono">{{ orders.length - groupChestCount }}</span>
+      </button>
+    </div>
+
     <!-- Loading skeleton -->
     <div v-if="isLoading" class="p-12 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
       <Loader2 class="w-8 h-8 animate-spin mx-auto mb-2 text-sky-500" />
@@ -23,12 +50,14 @@
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="orders.length === 0" class="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-200">
+    <div v-else-if="filteredOrders.length === 0" class="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-200">
       <PackageSearch class="w-12 h-12 text-slate-300 mx-auto mb-3 stroke-[1.2]" />
-      <h3 class="text-base font-semibold text-slate-700">Chưa có đơn hàng nào</h3>
-      <p class="text-sm text-slate-400 mt-1">Bạn chưa đặt đơn hàng nào trên hệ thống</p>
-      <router-link to="/products" class="mt-4 inline-block px-5 py-2 rounded-xl bg-sky-600 text-white font-medium text-sm">
-        Khám phá dịch vụ
+      <h3 class="text-base font-semibold text-slate-700">Chưa có đơn hàng nào trong mục này</h3>
+      <p class="text-sm text-slate-400 mt-1">
+        {{ activeTab === 'group_chest' ? 'Bạn chưa có đơn mở rương nào.' : 'Bạn chưa đặt đơn hàng nào trên hệ thống.' }}
+      </p>
+      <router-link :to="activeTab === 'group_chest' ? '/group-chest' : '/products'" class="mt-4 inline-block px-5 py-2 rounded-xl bg-sky-600 text-white font-medium text-sm">
+        {{ activeTab === 'group_chest' ? 'Đặt đơn Mở rương ngay' : 'Khám phá dịch vụ' }}
       </router-link>
     </div>
 
@@ -47,12 +76,17 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 text-slate-700">
-            <tr v-for="order in orders" :key="order.id" class="hover:bg-slate-50/60 transition">
+            <tr v-for="order in filteredOrders" :key="order.id" class="hover:bg-slate-50/60 transition">
               <td class="py-4 px-6 font-mono font-medium text-slate-900">
                 {{ order.orderCode }}
               </td>
               <td class="py-4 px-6">
-                {{ order.items[0]?.productName || 'Gói Dịch Vụ' }}
+                <div class="flex items-center gap-2">
+                  <span v-if="isOrderGroupChest(order)" class="px-2 py-0.5 rounded text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                    🐉 Mở rương
+                  </span>
+                  <span>{{ order.items[0]?.productName || 'Gói Dịch Vụ' }}</span>
+                </div>
               </td>
               <td class="py-4 px-6 font-semibold text-slate-900">
                 {{ formatVND(order.finalAmount) }}
@@ -88,11 +122,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { formatVND, formatDate } from '@/utils/format'
 import { orderService } from '@/services/order.service'
 import { PackageSearch, RotateCcw, Loader2 } from 'lucide-vue-next'
 import type { Order, OrderStatus } from '@/types'
+
+const activeTab = ref<'all' | 'group_chest' | 'chungsuc'>('all')
+
+const isOrderGroupChest = (order: Order) => {
+  return order.items?.some(it => it.inputs?.productType === 'group_chest_open')
+}
 
 const statusLabels: Record<OrderStatus, string> = {
   queued: 'Chờ gửi',
@@ -116,6 +156,18 @@ const statusStyles: Record<OrderStatus, string> = {
 
 const orders = ref<Order[]>([])
 const isLoading = ref(false)
+
+const groupChestCount = computed(() => orders.value.filter(isOrderGroupChest).length)
+
+const filteredOrders = computed(() => {
+  if (activeTab.value === 'group_chest') {
+    return orders.value.filter(isOrderGroupChest)
+  }
+  if (activeTab.value === 'chungsuc') {
+    return orders.value.filter(o => !isOrderGroupChest(o))
+  }
+  return orders.value
+})
 
 const loadOrders = async () => {
   isLoading.value = true
