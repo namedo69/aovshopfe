@@ -114,7 +114,7 @@
             ></div>
           </div>
           <p class="text-[11px] text-slate-400">
-            Hệ thống tự động theo dõi và cập nhật trực tiếp mỗi 5 giây cho đến khi đủ vé.
+            Hệ thống tự động cập nhật trực tiếp qua WebSocket. Polling dự phòng mỗi 8 giây.
           </p>
         </div>
       </div>
@@ -171,6 +171,7 @@ import { useRoute } from 'vue-router'
 import { formatVND, formatDate } from '@/utils/format'
 import { ArrowLeft, Check, Loader2 } from 'lucide-vue-next'
 import { orderService } from '@/services/order.service'
+import { useSocket } from '@/services/socket'
 import type { Order, OrderStatus } from '@/types'
 
 const route = useRoute()
@@ -180,13 +181,13 @@ const order = ref<Order | null>(null)
 const isLoading = ref(true)
 
 const statusLabels: Record<OrderStatus, string> = {
-  queued: 'Chờ gửi',
-  sending: 'Đang gửi đối tác',
-  processing: 'Đang xử lý',
-  completed: 'Hoàn thành',
-  failed: 'Lỗi',
-  refunded: 'Đã hoàn tiền',
-  cancelled: 'Đã hủy',
+  queued: 'Cho gui',
+  sending: 'Dang gui doi tac',
+  processing: 'Dang xu ly',
+  completed: 'Hoan thanh',
+  failed: 'Loi',
+  refunded: 'Da hoan tien',
+  cancelled: 'Da huy',
 }
 
 const statusStyles: Record<OrderStatus, string> = {
@@ -206,9 +207,17 @@ const progressPercent = computed(() => {
   return 15
 })
 
+// ─── WebSocket realtime updates ──────────────────────────────────
+const { subscribeOrder, onOrderProgress } = useSocket()
+
+// Fallback polling (only if WS is not delivering updates)
 let liveTimer: any = null
+let lastWSUpdate = 0
 
 const pollLiveProgress = async () => {
+  // Skip polling if we received a WS update recently (within 10s)
+  if (Date.now() - lastWSUpdate < 10_000) return
+
   if (!order.value || ['completed', 'cancelled', 'refunded', 'failed'].includes(order.value.status)) {
     if (liveTimer) clearInterval(liveTimer)
     return
@@ -225,7 +234,7 @@ const pollLiveProgress = async () => {
       if (liveTimer) clearInterval(liveTimer)
     }
   } catch {
-    // Bỏ qua lỗi polling tạm thời
+    // Ignore transient polling errors
   }
 }
 
@@ -233,14 +242,32 @@ onMounted(async () => {
   isLoading.value = true
   try {
     order.value = await orderService.getOrderByCode(orderCode)
-    // Nếu đơn đang chạy, bắt đầu Polling 5s
+
     if (order.value && ['queued', 'sending', 'processing'].includes(order.value.status)) {
-      liveTimer = setInterval(pollLiveProgress, 5000)
+      // Subscribe to WebSocket updates for this order
+      subscribeOrder(orderCode)
+
+      // Fallback: poll every 8s in case WS is not connected
+      liveTimer = setInterval(pollLiveProgress, 8_000)
     }
   } catch (err) {
     console.warn('API error loading order detail:', err)
   } finally {
     isLoading.value = false
+  }
+})
+
+// Handle WebSocket progress events
+onOrderProgress((data) => {
+  if (data.orderCode !== orderCode || !order.value) return
+  lastWSUpdate = Date.now()
+  order.value.status = data.status as OrderStatus
+  order.value.ticketsTarget = data.ticketsTarget
+  order.value.ticketsConfirmed = data.ticketsConfirmed
+  order.value.completedRequests = data.completedRequests
+
+  if (['completed', 'cancelled', 'refunded', 'failed'].includes(data.status)) {
+    if (liveTimer) clearInterval(liveTimer)
   }
 })
 

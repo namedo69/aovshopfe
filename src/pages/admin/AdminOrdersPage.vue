@@ -77,7 +77,7 @@
       </div>
 
       <!-- Thống kê thông số ví đối tác API (Cards) -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-sky-800/40">
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-3 border-t border-sky-800/40">
         <!-- Số dư ví Xu -->
         <div class="bg-black/30 border border-sky-500/20 rounded-xl p-3">
           <div class="flex items-center justify-between">
@@ -125,6 +125,19 @@
             {{ csPartnerInfo?.purchases_open ? 'Sẵn sàng nhận đơn' : 'Đang tạm dừng / bảo trì' }}
           </div>
           <span class="text-[10px] text-slate-400">{{ csPartnerInfo?.purchases_open ? 'Hệ thống hoạt động bình thường' : 'Tạm bảo trì' }}</span>
+        </div>
+
+        <!-- Worker đang kết nối qua WebSocket -->
+        <div class="bg-black/30 border border-sky-500/20 rounded-xl p-3">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400 text-[11px] font-semibold uppercase tracking-wider">Worker WS</span>
+            <Activity v-if="csWorkersCount > 0" class="w-4 h-4 text-emerald-400" />
+            <AlertTriangle v-else class="w-4 h-4 text-amber-400" />
+          </div>
+          <div :class="['font-mono font-extrabold text-lg mt-1', csWorkersCount > 0 ? 'text-emerald-400' : 'text-amber-400']">
+            {{ csWorkersCount }} worker
+          </div>
+          <span class="text-[10px] text-slate-400">{{ csWorkersCount > 0 ? 'AutoChungSuc đang kết nối' : 'Chưa có worker nào' }}</span>
         </div>
       </div>
     </div>
@@ -478,6 +491,7 @@ import { formatVND, formatDate, copyToClipboard } from '@/utils/format'
 import { ShoppingCart, RotateCcw, Loader2, Search, Copy, CheckSquare, CheckCircle, Zap, Power, Coins, Tag, Activity, CheckCircle2, AlertTriangle } from 'lucide-vue-next'
 import AdminPagination from '@/components/common/AdminPagination.vue'
 import { adminService } from '@/services/admin.service'
+import { useSocket } from '@/services/socket'
 import type { Order, OrderStatus } from '@/types'
 
 const ordersList = ref<Order[]>([])
@@ -656,6 +670,7 @@ watch(searchQuery, () => {
 // ChungSuc Provider State
 const csProvider = ref<any>(null)
 const csPartnerInfo = ref<any>(null)
+const csWorkersCount = ref(0)
 const isTogglingCS = ref(false)
 const isLoadingCS = ref(false)
 
@@ -665,6 +680,7 @@ const loadChungSucStatus = async () => {
     const data = await adminService.getChungSucProvider()
     csProvider.value = data.provider
     csPartnerInfo.value = data.partnerInfo
+    csWorkersCount.value = data.workers?.count ?? 0
   } catch (err) {
     console.warn('Lỗi lấy thông tin ChungSuc:', err)
   } finally {
@@ -687,19 +703,35 @@ const toggleChungSuc = async () => {
   }
 }
 
+// WebSocket realtime order updates
+const { subscribeAllOrders, onOrderProgress } = useSocket()
+
 let adminOrdersPollTimer: any = null
 
 onMounted(() => {
   loadOrders()
   loadChungSucStatus()
+  subscribeAllOrders()
 
-  // Polling tự động làm mới tiến độ mỗi 5 giây nếu có đơn đang chạy
+  // Realtime update order progress in table
+  onOrderProgress((data) => {
+    const targetOrder = ordersList.value.find(o => o.orderCode === data.orderCode)
+    if (targetOrder) {
+      targetOrder.status = data.status as OrderStatus
+      targetOrder.ticketsTarget = data.ticketsTarget
+      targetOrder.ticketsConfirmed = data.ticketsConfirmed
+      targetOrder.completedRequests = data.completedRequests
+    }
+  })
+
+  // Polling dự phòng mỗi 10 giây nếu có đơn đang chạy
   adminOrdersPollTimer = setInterval(() => {
     const hasRunning = ordersList.value.some(o => ['queued', 'sending', 'processing'].includes(o.status))
     if (hasRunning && !isLoading.value && !isSubmitting.value) {
       loadOrders()
+      loadChungSucStatus()
     }
-  }, 5000)
+  }, 10000)
 })
 
 onUnmounted(() => {

@@ -4,6 +4,7 @@ import type { User } from '@/types'
 import { authService } from '@/services/auth.service'
 import { walletService } from '@/services/wallet.service'
 import { setAccessToken } from '@/services/api'
+import { disconnectSocket } from '@/services/socket'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
@@ -83,6 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
     } finally {
       user.value = null
       setAccessToken(null)
+      disconnectSocket()
     }
   }
 

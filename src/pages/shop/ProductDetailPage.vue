@@ -528,6 +528,7 @@ import { useAuthStore } from '@/stores/auth'
 import { productService } from '@/services/product.service'
 import { orderService } from '@/services/order.service'
 import { walletService } from '@/services/wallet.service'
+import { useSocket } from '@/services/socket'
 import type { Product, Order, OrderStatus } from '@/types'
 import {
   Plus,
@@ -819,12 +820,19 @@ const handleSubmitOrder = async () => {
   }
 }
 
+// WebSocket realtime order tracking
+const { subscribeOrder, onOrderProgress } = useSocket()
+
 // Tải danh sách đơn hàng để theo dõi tiến độ
 const loadOrders = async () => {
   if (!authStore.isAuthenticated) return
   isLoadingOrders.value = true
   try {
     ordersList.value = await orderService.getOrders()
+    // Subscribe WebSocket for all active orders
+    ordersList.value
+      .filter(o => ['queued', 'sending', 'processing'].includes(o.status))
+      .forEach(o => subscribeOrder(o.orderCode))
   } catch (err) {
     console.warn('Lỗi tải danh sách đơn:', err)
   } finally {
@@ -871,7 +879,18 @@ onMounted(async () => {
     isLoading.value = false
   }
 
-  // 4. Polling tự động kiểm tra tiến độ mỗi 6 giây nếu có đơn đang chạy
+  // Realtime update via WebSocket
+  onOrderProgress((data) => {
+    const target = ordersList.value.find(o => o.orderCode === data.orderCode)
+    if (target) {
+      target.status = data.status as OrderStatus
+      target.ticketsTarget = data.ticketsTarget
+      target.ticketsConfirmed = data.ticketsConfirmed
+      target.completedRequests = data.completedRequests
+    }
+  })
+
+  // 4. Polling dự phòng mỗi 10 giây nếu có đơn đang chạy
   pollingTimer = setInterval(() => {
     const hasActiveOrders = ordersList.value.some(o => ['queued', 'sending', 'processing'].includes(o.status))
     if (authStore.isAuthenticated && hasActiveOrders && !isLoadingOrders.value && !isSubmitting.value) {
@@ -879,7 +898,7 @@ onMounted(async () => {
         ordersList.value = orders
       }).catch(() => {})
     }
-  }, 6000)
+  }, 10000)
 })
 
 onUnmounted(() => {
