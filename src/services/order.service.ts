@@ -33,6 +33,11 @@ export interface ValidateVoucherResponse {
   message?: string
 }
 
+export interface GroupChestAccountInput {
+  externalAccountId: string
+  credentialRef: string
+}
+
 // Hàm chuẩn hoá dữ liệu Order từ Backend (snake_case -> camelCase)
 export function mapBackendOrder(raw: any): Order {
   const orderCode = raw.orderCode || raw.order_code || raw.id
@@ -136,6 +141,28 @@ export const orderService = {
       },
     })
     return mapBackendOrder(res.data)
+  },
+
+  async createGroupChestOrder(data: { productId: string; accounts: GroupChestAccountInput[]; mode?: 'standard' | 'dry_run'; voucherCode?: string; customerNote?: string }, idempotencyKey: string): Promise<Order> {
+    const res = await apiClient.post<any>('/orders', {
+      items: [{
+        productId: data.productId,
+        quantity: data.accounts.length,
+        customerInput: {
+          productType: 'group_chest_open',
+          accounts: data.accounts,
+          mode: data.mode || 'standard',
+        },
+      }],
+      voucherCode: data.voucherCode,
+      customerNote: data.customerNote,
+    }, { headers: { 'Idempotency-Key': idempotencyKey } })
+    return mapBackendOrder(res.data)
+  },
+
+  async getGroupChestOrder(orderCode: string): Promise<any> {
+    const res = await apiClient.get<any>(`/group-chest/${orderCode}`)
+    return res.data
   },
 
   // Tạo nhiều đơn hàng cùng lúc kèm số lượng từng code và giảm giá voucher

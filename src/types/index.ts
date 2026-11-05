@@ -99,6 +99,7 @@ export interface Product {
   minQuantity?: number
   maxQuantity?: number
   createdAt?: string
+  productType?: string
 }
 
 export interface Deposit {

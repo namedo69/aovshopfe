@@ -79,6 +79,7 @@ export function mapBackendProduct(raw: BackendProduct | Product): Product {
     minQuantity: b.minQuantity,
     maxQuantity: b.maxQuantity,
     createdAt: b.createdAt,
+    productType: typeof rawSchemaObj.productType === 'string' ? rawSchemaObj.productType : undefined,
   }
 }
 

@@ -181,12 +181,20 @@ export function useSocket() {
     globalCallbacks.length = 0
   })
 
+  function onGroupChestItemResult(callback: (data: any) => void) {
+    const sock = getSocket()
+    if (!sock) return () => {}
+    sock.on('group-chest:item-result', callback)
+    return () => { sock.off('group-chest:item-result', callback) }
+  }
+
   return {
     connected,
     subscribeOrder,
     unsubscribeOrder,
     subscribeAllOrders,
     onOrderProgress,
+    onGroupChestItemResult,
   }
 }
 
