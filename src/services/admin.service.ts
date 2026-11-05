@@ -264,4 +264,9 @@ export const adminService = {
     const res = await apiClient.patch<any>('/admin/providers/chungsuc/toggle', { isActive })
     return res.data
   },
+
+  async updateChungSucMode(mode: 'auto' | 'pc_only' | 'api_only'): Promise<any> {
+    const res = await apiClient.patch<any>('/admin/providers/chungsuc/mode', { mode })
+    return res.data
+  },
 }

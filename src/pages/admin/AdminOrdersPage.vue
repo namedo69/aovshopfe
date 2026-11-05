@@ -76,6 +76,34 @@
         </div>
       </div>
 
+      <!-- Thanh chuyển đổi 3 chế độ điều phối -->
+      <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 bg-black/40 border border-sky-500/20 rounded-xl p-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-sky-300 uppercase tracking-wider shrink-0">Chế độ điều phối:</span>
+          <span class="text-xs text-slate-300">
+            {{ dispatchModeDescriptions[currentDispatchMode] || '' }}
+          </span>
+        </div>
+
+        <div class="inline-flex flex-wrap rounded-xl bg-slate-800/80 p-1 border border-slate-700/60 text-xs shrink-0">
+          <button
+            v-for="opt in modeOptions"
+            :key="opt.value"
+            @click="setDispatchMode(opt.value)"
+            :disabled="isChangingMode"
+            :class="[
+              'px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50',
+              currentDispatchMode === opt.value
+                ? 'bg-sky-500 text-white shadow-sm'
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
+            ]"
+          >
+            <span>{{ opt.icon }}</span>
+            <span>{{ opt.label }}</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Thống kê thông số ví đối tác API (Cards) -->
       <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-3 border-t border-sky-800/40">
         <!-- Số dư ví Xu -->
@@ -671,8 +699,22 @@ watch(searchQuery, () => {
 const csProvider = ref<any>(null)
 const csPartnerInfo = ref<any>(null)
 const csWorkersCount = ref(0)
+const currentDispatchMode = ref<'auto' | 'pc_only' | 'api_only'>('auto')
 const isTogglingCS = ref(false)
 const isLoadingCS = ref(false)
+const isChangingMode = ref(false)
+
+const modeOptions = [
+  { value: 'auto' as const, label: 'Tự động (Ưu tiên PC)', icon: '⚡' },
+  { value: 'pc_only' as const, label: 'Chỉ PC Worker', icon: '💻' },
+  { value: 'api_only' as const, label: 'Chỉ API Đối Tác', icon: '🌐' },
+]
+
+const dispatchModeDescriptions: Record<string, string> = {
+  auto: 'Ưu tiên gửi về PC Worker, nếu PC tắt tự động chuyển sang API bên thứ 3',
+  pc_only: 'Chỉ gửi về tool PC (tiết kiệm Xu, đơn tự chờ khi PC chưa bật tool)',
+  api_only: 'Chỉ gửi qua API đối tác (chungsuc.io.vn, trừ Xu trực tiếp)',
+}
 
 const loadChungSucStatus = async () => {
   isLoadingCS.value = true
@@ -681,6 +723,9 @@ const loadChungSucStatus = async () => {
     csProvider.value = data.provider
     csPartnerInfo.value = data.partnerInfo
     csWorkersCount.value = data.workers?.count ?? 0
+    if (data.provider?.dispatchMode) {
+      currentDispatchMode.value = data.provider.dispatchMode
+    }
   } catch (err) {
     console.warn('Lỗi lấy thông tin ChungSuc:', err)
   } finally {
@@ -700,6 +745,20 @@ const toggleChungSuc = async () => {
     showAlert('Không thể đổi trạng thái cổng Chung Sức: ' + (err.message || ''), 'error')
   } finally {
     isTogglingCS.value = false
+  }
+}
+
+const setDispatchMode = async (mode: 'auto' | 'pc_only' | 'api_only') => {
+  if (currentDispatchMode.value === mode) return
+  isChangingMode.value = true
+  try {
+    const res = await adminService.updateChungSucMode(mode)
+    currentDispatchMode.value = mode
+    showAlert(res.message || 'Đã đổi chế độ điều phối thành công', 'success')
+  } catch (err: any) {
+    showAlert('Không thể đổi chế độ điều phối: ' + (err.message || ''), 'error')
+  } finally {
+    isChangingMode.value = false
   }
 }
 
