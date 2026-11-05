@@ -39,7 +39,7 @@
           <tr>
             <th class="py-3 px-6 font-semibold">Tên Gói</th>
             <th class="py-3 px-6 font-semibold">Slug</th>
-            <th class="py-3 px-6 font-semibold text-center">Lượt API Tự Động</th>
+            <th class="py-3 px-6 font-semibold text-center">Loại / Cấu Hình</th>
             <th class="py-3 px-6 font-semibold">Giá Bán</th>
             <th class="py-3 px-6 font-semibold">Giá Gốc</th>
             <th class="py-3 px-6 font-semibold">Trạng Thái</th>
@@ -54,7 +54,10 @@
             </td>
             <td class="py-4 px-6 font-mono text-xs text-slate-500">{{ item.slug }}</td>
             <td class="py-4 px-6 text-center">
-              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
+              <span v-if="item.productType === 'group_chest_open'" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                🐉 Mở rương nhóm
+              </span>
+              <span v-else class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
                 ⚡ {{ item.requestsPerItem || 1 }} lượt
                 <span class="text-[10px] text-slate-400 font-normal">({{ (item.requestsPerItem || 1) * 38 }} vé)</span>
               </span>
@@ -160,8 +163,22 @@
             </div>
           </div>
 
-          <!-- Cấu hình số request API gửi tự động -->
-          <div class="p-3.5 bg-sky-50/70 border border-sky-100 rounded-xl space-y-1.5">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Loại dịch vụ *</label>
+            <div class="grid grid-cols-2 gap-3">
+              <label :class="['flex items-center gap-2 p-3 rounded-xl border cursor-pointer text-xs font-bold transition', selectedProductType === 'chungsuc' ? 'bg-sky-50 border-sky-400 text-sky-800' : 'bg-slate-50 border-slate-200 text-slate-600']">
+                <input type="radio" value="chungsuc" v-model="selectedProductType" class="hidden" />
+                <span>⚡ Chung Sức (Code sự kiện)</span>
+              </label>
+              <label :class="['flex items-center gap-2 p-3 rounded-xl border cursor-pointer text-xs font-bold transition', selectedProductType === 'group_chest_open' ? 'bg-purple-50 border-purple-400 text-purple-800' : 'bg-slate-50 border-slate-200 text-slate-600']">
+                <input type="radio" value="group_chest_open" v-model="selectedProductType" class="hidden" />
+                <span>🐉 Mở Rương Nhóm (Tool PC)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Cấu hình số request API gửi tự động cho Chung Sức -->
+          <div v-if="selectedProductType === 'chungsuc'" class="p-3.5 bg-sky-50/70 border border-sky-100 rounded-xl space-y-1.5">
             <div class="flex items-center justify-between">
               <label class="block text-xs font-bold text-sky-900">
                 ⚡ Số request API tự động cho gói này *
@@ -179,6 +196,18 @@
             />
             <p class="text-[11px] text-slate-500">
               Không giới hạn số lượt (Mặc định là <strong>1</strong> = 38 vé. Nhập <strong>8</strong> = 304 vé, <strong>16</strong> = 608 vé...).
+            </p>
+          </div>
+
+          <!-- Thông tin cho Mở rương nhóm -->
+          <div v-else class="p-3.5 bg-purple-50/70 border border-purple-100 rounded-xl space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold text-purple-900">
+                🐉 Mở rương nhóm tự động qua Tool PC
+              </label>
+            </div>
+            <p class="text-[11px] text-slate-600">
+              Khách hàng nhập danh sách tài khoản theo cú pháp <code class="bg-white px-1.5 py-0.5 rounded font-mono text-purple-700 border border-purple-200">user|pass</code> hoặc <code class="bg-white px-1.5 py-0.5 rounded font-mono text-purple-700 border border-purple-200">user:pass</code>. Hệ thống sẽ tự động dispatch tới Tool PC mở rương và cập nhật tiến độ trực tiếp.
             </p>
           </div>
 
@@ -239,6 +268,7 @@ const isModalOpen = ref(false)
 const isEditing = ref(false)
 const currentEditId = ref<string | null>(null)
 const requestsPerItemInput = ref<number>(1)
+const selectedProductType = ref<'chungsuc' | 'group_chest_open'>('chungsuc')
 
 const alertMessage = ref('')
 const alertType = ref<'success' | 'error'>('success')
@@ -294,6 +324,7 @@ const openCreateModal = () => {
   isEditing.value = false
   currentEditId.value = null
   requestsPerItemInput.value = 1
+  selectedProductType.value = 'chungsuc'
   form.value = {
     name: '',
     slug: '',
@@ -313,6 +344,7 @@ const openEditModal = (item: Product) => {
   isEditing.value = true
   currentEditId.value = item.id
   requestsPerItemInput.value = item.requestsPerItem || 1
+  selectedProductType.value = item.productType === 'group_chest_open' ? 'group_chest_open' : 'chungsuc'
   form.value = {
     name: item.name,
     slug: item.slug,
@@ -320,10 +352,9 @@ const openEditModal = (item: Product) => {
     priceAmount: item.originalPrice,
     salePriceAmount: item.price,
     isActive: item.status === 'active',
-    inputSchema: {
-      accountId: { label: 'Code Sự kiện', type: 'text', required: true },
-      requestsPerItem: requestsPerItemInput.value,
-    }
+    inputSchema: item.productType === 'group_chest_open'
+      ? { productType: 'group_chest_open', required: ['accounts'], maxAccounts: 100 }
+      : { accountId: { label: 'Code Sự kiện', type: 'text', required: true }, requestsPerItem: requestsPerItemInput.value }
   }
   isModalOpen.value = true
 }
@@ -334,11 +365,18 @@ const handleSaveProduct = async () => {
     return
   }
 
-  // Đóng gói requestsPerItem vào inputSchema
-  form.value.inputSchema = {
-    ...(form.value.inputSchema || {}),
-    accountId: { label: 'Code Sự kiện', type: 'text', required: true },
-    requestsPerItem: Math.max(1, Math.floor(requestsPerItemInput.value || 1)),
+  if (selectedProductType.value === 'group_chest_open') {
+    form.value.inputSchema = {
+      productType: 'group_chest_open',
+      required: ['accounts'],
+      maxAccounts: 100,
+    }
+  } else {
+    form.value.inputSchema = {
+      ...(form.value.inputSchema || {}),
+      accountId: { label: 'Code Sự kiện', type: 'text', required: true },
+      requestsPerItem: Math.max(1, Math.floor(requestsPerItemInput.value || 1)),
+    }
   }
 
   isSubmitting.value = true

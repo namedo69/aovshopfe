@@ -45,12 +45,13 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { formatVND, generateIdempotencyKey } from '@/utils/format'
 import { productService } from '@/services/product.service'
 import { orderService, type GroupChestAccountInput } from '@/services/order.service'
 import type { Product } from '@/types'
 
+const route = useRoute()
 const router = useRouter()
 const products = ref<Product[]>([])
 const productId = ref('')
@@ -84,6 +85,11 @@ async function submit() {
 
 onMounted(async () => {
   products.value = await productService.getProducts()
-  productId.value = groupProducts.value[0]?.id || ''
+  const qProd = route.query.product as string
+  if (qProd && groupProducts.value.some(p => p.id === qProd)) {
+    productId.value = qProd
+  } else {
+    productId.value = groupProducts.value[0]?.id || ''
+  }
 })
 </script>
